@@ -46,8 +46,6 @@
 		387D79532E0DB3C700042594 /* Exceptions for "Habit Tracking" folder in "Habit Tracking" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				"Habit Tracking/DesignConstants.swift",
-				"Habit Tracking/GoalEntryFlowView.swift",
 				Info.plist,
 			);
 			target = 38370DEB2E0B7F8400A00E78 /* Habit Tracking */;

@@ -12,114 +12,137 @@ struct SignUpView: View {
     @State private var alertMessage = ""
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: DesignConstants.extraLargeSpacing) {
-                // Header
-                VStack(spacing: DesignConstants.mediumSpacing) {
-                    Text("Create Account")
-                        .font(DesignConstants.titleFont)
-                        .fontWeight(.bold)
-                        .foregroundColor(DesignConstants.textColor)
-                    
-                    Text("Start your journey to better habits")
-                        .font(DesignConstants.bodyFont)
-                        .foregroundColor(DesignConstants.textColor.opacity(0.7))
-                        .multilineTextAlignment(.center)
-                }
-                
-                // Form
-                VStack(spacing: DesignConstants.largeSpacing) {
-                    VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
-                        Text("Email")
-                            .font(DesignConstants.bodyFont)
-                            .fontWeight(.medium)
-                            .foregroundColor(DesignConstants.textColor)
-                        
-                        TextField("Enter your email", text: $email)
-                            .textFieldStyle(CustomTextFieldStyle())
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
-                        Text("Password")
-                            .font(DesignConstants.bodyFont)
-                            .fontWeight(.medium)
-                            .foregroundColor(DesignConstants.textColor)
-                        
-                        SecureField("Enter your password", text: $password)
-                            .textFieldStyle(CustomTextFieldStyle())
-                            .textContentType(.password)
-                            .disableAutocorrection(true)
-                            .textInputAutocapitalization(.never)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
-                        Text("Confirm Password")
-                            .font(DesignConstants.bodyFont)
-                            .fontWeight(.medium)
-                            .foregroundColor(DesignConstants.textColor)
-                        
-                        SecureField("Confirm your password", text: $confirmPassword)
-                            .textFieldStyle(CustomTextFieldStyle())
-                            .textContentType(.password)
-                            .disableAutocorrection(true)
-                            .textInputAutocapitalization(.never)
-                    }
-                }
-                
-                // Sign Up button
-                Button(action: signUp) {
-                    Text("Create Account")
-                        .font(DesignConstants.buttonFont)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: DesignConstants.buttonHeight)
-                        .background(canSignUp ? DesignConstants.primaryColor : DesignConstants.primaryColor.opacity(0.5))
-                        .cornerRadius(DesignConstants.mediumCornerRadius)
-                }
-                .disabled(!canSignUp)
-                
-                // Login link
-                HStack {
-                    Text("Already have an account?")
-                        .font(DesignConstants.bodyFont)
-                        .foregroundColor(DesignConstants.textColor.opacity(0.7))
-                    
-                    Button("Sign In") {
-                        appState.navigateTo(.login)
-                    }
-                    .font(DesignConstants.bodyFont)
-                    .foregroundColor(DesignConstants.primaryColor)
-                }
-                
-                // Google Sign-In Button (UI only)
-                Button(action: handleGoogleSignIn) {
-                    HStack {
-                        Image(systemName: "globe")
+        VStack(spacing: DesignConstants.extraLargeSpacing) {
+            // Back dugme - uvek na vrhu
+            HStack {
+                Button(action: {
+                    appState.navigateTo(.splash)
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
                             .font(.title2)
-                            .foregroundColor(.white)
-                        Text("Continue with Google")
-                            .font(DesignConstants.buttonFont)
-                            .foregroundColor(.white)
+                        Text("Nazad")
+                            .font(DesignConstants.bodyFont)
                     }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: DesignConstants.buttonHeight)
-                    .background(Color(red: 0.22, green: 0.47, blue: 0.97))
-                    .cornerRadius(DesignConstants.mediumCornerRadius)
+                    .foregroundColor(DesignConstants.textColor)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 14)
+                    .background(Color.white.opacity(0.2))
+                    .clipShape(Capsule())
                 }
-                .padding(.vertical, DesignConstants.smallSpacing)
-                
                 Spacer()
             }
             .padding(.horizontal, DesignConstants.largeSpacing)
-            .background(DesignConstants.backgroundColor)
-            .navigationBarHidden(true)
-            .alert("Sign Up Error", isPresented: $showAlert) {
-                Button("OK") { }
-            } message: {
-                Text(alertMessage)
+            .padding(.top, 44)
+            .onAppear {
+                print("Back dugme renderovano")
             }
+            
+            // Header
+            VStack(spacing: DesignConstants.mediumSpacing) {
+                Text("Create Account")
+                    .font(DesignConstants.titleFont)
+                    .fontWeight(.bold)
+                    .foregroundColor(DesignConstants.textColor)
+                
+                Text("Start your journey to better habits")
+                    .font(DesignConstants.bodyFont)
+                    .foregroundColor(DesignConstants.textColor.opacity(0.7))
+                    .multilineTextAlignment(.center)
+            }
+            
+            // Form
+            VStack(spacing: DesignConstants.largeSpacing) {
+                VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
+                    Text("Email")
+                        .font(DesignConstants.bodyFont)
+                        .fontWeight(.medium)
+                        .foregroundColor(DesignConstants.textColor)
+                    
+                    TextField("Enter your email", text: $email)
+                        .textFieldStyle(CustomTextFieldStyle())
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+                }
+                
+                VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
+                    Text("Password")
+                        .font(DesignConstants.bodyFont)
+                        .fontWeight(.medium)
+                        .foregroundColor(DesignConstants.textColor)
+                    
+                    SecureField("Enter your password", text: $password)
+                        .textFieldStyle(CustomTextFieldStyle())
+                        .textContentType(.password)
+                        .disableAutocorrection(true)
+                        .textInputAutocapitalization(.never)
+                }
+                
+                VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
+                    Text("Confirm Password")
+                        .font(DesignConstants.bodyFont)
+                        .fontWeight(.medium)
+                        .foregroundColor(DesignConstants.textColor)
+                    
+                    SecureField("Confirm your password", text: $confirmPassword)
+                        .textFieldStyle(CustomTextFieldStyle())
+                        .textContentType(.password)
+                        .disableAutocorrection(true)
+                        .textInputAutocapitalization(.never)
+                }
+            }
+            
+            // Sign Up button
+            Button(action: signUp) {
+                Text("Create Account")
+                    .font(DesignConstants.buttonFont)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: DesignConstants.buttonHeight)
+                    .background(canSignUp ? DesignConstants.primaryColor : DesignConstants.primaryColor.opacity(0.5))
+                    .cornerRadius(DesignConstants.mediumCornerRadius)
+            }
+            .disabled(!canSignUp)
+            
+            // Login link
+            HStack {
+                Text("Already have an account?")
+                    .font(DesignConstants.bodyFont)
+                    .foregroundColor(DesignConstants.textColor.opacity(0.7))
+                
+                Button("Sign In") {
+                    appState.navigateTo(.login)
+                }
+                .font(DesignConstants.bodyFont)
+                .foregroundColor(DesignConstants.primaryColor)
+            }
+            
+            // Google Sign-In Button (UI only)
+            Button(action: handleGoogleSignIn) {
+                HStack {
+                    Image(systemName: "globe")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                    Text("Continue with Google")
+                        .font(DesignConstants.buttonFont)
+                        .foregroundColor(.white)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: DesignConstants.buttonHeight)
+                .background(Color(red: 0.22, green: 0.47, blue: 0.97))
+                .cornerRadius(DesignConstants.mediumCornerRadius)
+            }
+            .padding(.vertical, DesignConstants.smallSpacing)
+            
+            Spacer()
+        }
+        .padding(.horizontal, DesignConstants.largeSpacing)
+        .background(DesignConstants.backgroundColor)
+        .edgesIgnoringSafeArea(.top)
+        .alert("Sign Up Error", isPresented: $showAlert) {
+            Button("OK") { }
+        } message: {
+            Text(alertMessage)
         }
     }
     
@@ -302,4 +325,172 @@ struct CustomTextFieldStyle: TextFieldStyle {
 
 #Preview {
     SignUpView()
+}
+
+struct SignUpSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var appState = AppStateManager.shared
+    @StateObject private var coreDataManager = CoreDataManager.shared
+    
+    @State private var email = ""
+    @State private var password = ""
+    @State private var confirmPassword = ""
+    @State private var name = ""
+    @State private var showAlert = false
+    @State private var alertMessage = ""
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: DesignConstants.extraLargeSpacing) {
+                // Header
+                VStack(spacing: DesignConstants.mediumSpacing) {
+                    Text("Create Account")
+                        .font(DesignConstants.titleFont)
+                        .fontWeight(.bold)
+                        .foregroundColor(DesignConstants.textColor)
+                    
+                    Text("Start your journey to better habits")
+                        .font(DesignConstants.bodyFont)
+                        .foregroundColor(DesignConstants.textColor.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                }
+                
+                // Form
+                VStack(spacing: DesignConstants.largeSpacing) {
+                    VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
+                        Text("Email")
+                            .font(DesignConstants.bodyFont)
+                            .fontWeight(.medium)
+                            .foregroundColor(DesignConstants.textColor)
+                        
+                        TextField("Enter your email", text: $email)
+                            .textFieldStyle(CustomTextFieldStyle())
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
+                        Text("Password")
+                            .font(DesignConstants.bodyFont)
+                            .fontWeight(.medium)
+                            .foregroundColor(DesignConstants.textColor)
+                        
+                        SecureField("Enter your password", text: $password)
+                            .textFieldStyle(CustomTextFieldStyle())
+                            .textContentType(.password)
+                            .disableAutocorrection(true)
+                            .textInputAutocapitalization(.never)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
+                        Text("Confirm Password")
+                            .font(DesignConstants.bodyFont)
+                            .fontWeight(.medium)
+                            .foregroundColor(DesignConstants.textColor)
+                        
+                        SecureField("Confirm your password", text: $confirmPassword)
+                            .textFieldStyle(CustomTextFieldStyle())
+                            .textContentType(.password)
+                            .disableAutocorrection(true)
+                            .textInputAutocapitalization(.never)
+                    }
+                }
+                
+                // Sign Up button
+                Button(action: signUp) {
+                    Text("Create Account")
+                        .font(DesignConstants.buttonFont)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: DesignConstants.buttonHeight)
+                        .background(canSignUp ? DesignConstants.primaryColor : DesignConstants.primaryColor.opacity(0.5))
+                        .cornerRadius(DesignConstants.mediumCornerRadius)
+                }
+                .disabled(!canSignUp)
+                
+                // Login link
+                HStack {
+                    Text("Already have an account?")
+                        .font(DesignConstants.bodyFont)
+                        .foregroundColor(DesignConstants.textColor.opacity(0.7))
+                    
+                    Button("Sign In") {
+                        dismiss()
+                        appState.navigateTo(.login)
+                    }
+                    .font(DesignConstants.bodyFont)
+                    .foregroundColor(DesignConstants.primaryColor)
+                }
+                
+                // Google Sign-In Button (UI only)
+                Button(action: handleGoogleSignIn) {
+                    HStack {
+                        Image(systemName: "globe")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                        Text("Continue with Google")
+                            .font(DesignConstants.buttonFont)
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: DesignConstants.buttonHeight)
+                    .background(Color(red: 0.22, green: 0.47, blue: 0.97))
+                    .cornerRadius(DesignConstants.mediumCornerRadius)
+                }
+                .padding(.vertical, DesignConstants.smallSpacing)
+                
+                Spacer()
+            }
+            .padding(.horizontal, DesignConstants.largeSpacing)
+            .background(DesignConstants.backgroundColor)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .foregroundColor(DesignConstants.primaryColor)
+                }
+            }
+            .alert("Sign Up Error", isPresented: $showAlert) {
+                Button("OK") { }
+            } message: {
+                Text(alertMessage)
+            }
+        }
+    }
+    
+    private var canSignUp: Bool {
+        !email.isEmpty && !password.isEmpty && !confirmPassword.isEmpty && password == confirmPassword
+    }
+    
+    private func signUp() {
+        // Validate email format
+        guard email.contains("@") && email.contains(".") else {
+            alertMessage = "Please enter a valid email address"
+            showAlert = true
+            return
+        }
+        
+        // Validate password length
+        guard password.count >= 6 else {
+            alertMessage = "Password must be at least 6 characters long"
+            showAlert = true
+            return
+        }
+        
+        // Create user profile
+        _ = coreDataManager.createUserProfile(email: email, name: name)
+        
+        // Close sheet and authenticate
+        dismiss()
+        appState.authenticate()
+    }
+    
+    private func handleGoogleSignIn() {
+        // TODO: Integrate Google Sign-In SDK
+        // For now, simulate successful login
+        dismiss()
+        appState.authenticate()
+    }
 } 

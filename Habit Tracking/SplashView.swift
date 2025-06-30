@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SplashView: View {
     @StateObject private var appState = AppStateManager.shared
+    @State private var showSignUpSheet = false
+    
     var body: some View {
         ZStack {
             // Pozadina
@@ -62,7 +64,7 @@ struct SplashView: View {
             // Dugmad
             HStack(spacing: 16) {
                 Button(action: {
-                    appState.navigateTo(.signUp)
+                    showSignUpSheet = true
                 }) {
                     Text("Sign Up")
                         .font(.custom("Inter_28pt-Bold", size: 16))
@@ -89,6 +91,9 @@ struct SplashView: View {
             .position(x: 220, y: 956 - 30 - 28)
         }
         .frame(width: 440, height: 956)
+        .sheet(isPresented: $showSignUpSheet) {
+            SignUpSheetView()
+        }
     }
 }
 

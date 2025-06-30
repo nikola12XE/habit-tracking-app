@@ -2,8 +2,12 @@ import SwiftUI
 
 struct SplashView: View {
     @StateObject private var appState = AppStateManager.shared
+    @State private var showSignUpSheet = false
+    @State private var showLoginSheet = false
+    
     var body: some View {
-        ZStack {
+        print("SplashView loaded")
+        return ZStack {
             // Pozadina
             Color(red: 0.93, green: 0.93, blue: 0.93) // #ededed
                 .ignoresSafeArea()
@@ -65,38 +69,50 @@ struct SplashView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
             // Dugmad (uvek na vrhu)
-            HStack(spacing: 16) {
-                Button(action: {
-                    appState.navigateTo(.signUp)
-                }) {
-                    Text("Sign Up")
-                        .font(.custom("Inter24pt-Medium", size: 16))
-                        .foregroundColor(.white)
-                        .frame(width: 162, height: 56)
-                        .background(Color.black)
-                        .cornerRadius(100)
-                        .tracking(-0.64)
+            VStack {
+                Spacer()
+                HStack(spacing: 8) {
+                    Button(action: {
+                        print("Sign Up kliknut")
+                        showSignUpSheet = true
+                    }) {
+                        Text("Sign Up")
+                            .font(.custom("Inter_28pt-Bold", size: 16))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Color.black)
+                            .cornerRadius(100)
+                            .tracking(-0.64)
+                    }
+                    Button(action: {
+                        print("Set your Goal kliknut")
+                        showLoginSheet = false
+                        showSignUpSheet = false
+                        AppStateManager.shared.navigateTo(.goalEntry)
+                    }) {
+                        Text("Set your Goal")
+                            .font(.custom("Inter_28pt-Bold", size: 16))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Color.white)
+                            .cornerRadius(100)
+                            .tracking(-0.64)
+                    }
                 }
-
-                Button(action: {
-                    appState.navigateTo(.goalEntry)
-                }) {
-                    Text("Set your Goal")
-                        .font(.custom("Inter24pt-Medium", size: 16))
-                        .foregroundColor(.black)
-                        .frame(width: 222, height: 56)
-                        .background(Color.white)
-                        .cornerRadius(100)
-                        .tracking(-0.64)
-                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 45)
             }
-            .frame(width: 440, height: 56)
-            .position(x: 220, y: 956 - 30 - 28 - 15)
-            .onAppear {
-                print(UIFont(name: "Inter_24pt-Bold", size: 16) ?? "Font not found")
-            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(width: 440, height: 956)
+        .sheet(isPresented: $showSignUpSheet) {
+            SignUpView()
+        }
+        .sheet(isPresented: $showLoginSheet) {
+            LoginView()
+        }
     }
 }
 
