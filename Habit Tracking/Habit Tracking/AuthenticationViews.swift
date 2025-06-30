@@ -13,24 +13,27 @@ struct SignUpView: View {
     
     var body: some View {
         VStack(spacing: DesignConstants.extraLargeSpacing) {
-            // Close dugme - uvek na vrhu
+            // Back dugme gore levo
             HStack {
                 Button(action: {
                     appState.navigateTo(.splash)
                 }) {
-                    Text("Close")
-                        .font(DesignConstants.bodyFont)
-                        .foregroundColor(DesignConstants.textColor)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 14)
-                        .background(Color.white.opacity(0.2))
-                        .clipShape(Capsule())
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.title2)
+                        Text("Back")
+                            .font(DesignConstants.bodyFont)
+                    }
+                    .foregroundColor(DesignConstants.textColor)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 14)
+                    .background(Color.white.opacity(0.2))
+                    .clipShape(Capsule())
                 }
                 Spacer()
             }
             .padding(.horizontal, DesignConstants.largeSpacing)
             .padding(.top, 44)
-            
             // Header
             VStack(spacing: DesignConstants.mediumSpacing) {
                 Text("Create Account")
@@ -43,7 +46,6 @@ struct SignUpView: View {
                     .foregroundColor(DesignConstants.textColor.opacity(0.7))
                     .multilineTextAlignment(.center)
             }
-            
             // Form
             VStack(spacing: DesignConstants.largeSpacing) {
                 VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
@@ -57,7 +59,6 @@ struct SignUpView: View {
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
                 }
-                
                 VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
                     Text("Password")
                         .font(DesignConstants.bodyFont)
@@ -70,7 +71,6 @@ struct SignUpView: View {
                         .disableAutocorrection(true)
                         .textInputAutocapitalization(.never)
                 }
-                
                 VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
                     Text("Confirm Password")
                         .font(DesignConstants.bodyFont)
@@ -84,7 +84,6 @@ struct SignUpView: View {
                         .textInputAutocapitalization(.never)
                 }
             }
-            
             // Sign Up button
             Button(action: signUp) {
                 Text("Create Account")
@@ -96,20 +95,17 @@ struct SignUpView: View {
                     .cornerRadius(DesignConstants.mediumCornerRadius)
             }
             .disabled(!canSignUp)
-            
             // Login link
             HStack {
                 Text("Already have an account?")
                     .font(DesignConstants.bodyFont)
                     .foregroundColor(DesignConstants.textColor.opacity(0.7))
-                
                 Button("Sign In") {
                     appState.navigateTo(.login)
                 }
                 .font(DesignConstants.bodyFont)
                 .foregroundColor(DesignConstants.primaryColor)
             }
-            
             // Google Sign-In Button (UI only)
             Button(action: handleGoogleSignIn) {
                 HStack {
@@ -126,7 +122,6 @@ struct SignUpView: View {
                 .cornerRadius(DesignConstants.mediumCornerRadius)
             }
             .padding(.vertical, DesignConstants.smallSpacing)
-            
             Spacer()
         }
         .padding(.horizontal, DesignConstants.largeSpacing)
@@ -183,24 +178,27 @@ struct LoginView: View {
     
     var body: some View {
         VStack(spacing: DesignConstants.extraLargeSpacing) {
-            // Close dugme - uvek na vrhu
+            // Back dugme gore levo
             HStack {
                 Button(action: {
                     appState.navigateTo(.splash)
                 }) {
-                    Text("Close")
-                        .font(DesignConstants.bodyFont)
-                        .foregroundColor(DesignConstants.textColor)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 14)
-                        .background(Color.white.opacity(0.2))
-                        .clipShape(Capsule())
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.title2)
+                        Text("Back")
+                            .font(DesignConstants.bodyFont)
+                    }
+                    .foregroundColor(DesignConstants.textColor)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 14)
+                    .background(Color.white.opacity(0.2))
+                    .clipShape(Capsule())
                 }
                 Spacer()
             }
             .padding(.horizontal, DesignConstants.largeSpacing)
             .padding(.top, 44)
-            
             // Header
             VStack(spacing: DesignConstants.mediumSpacing) {
                 Text("Welcome Back")
@@ -213,7 +211,6 @@ struct LoginView: View {
                     .foregroundColor(DesignConstants.textColor.opacity(0.7))
                     .multilineTextAlignment(.center)
             }
-            
             // Form
             VStack(spacing: DesignConstants.largeSpacing) {
                 VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
@@ -227,7 +224,6 @@ struct LoginView: View {
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
                 }
-                
                 VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
                     Text("Password")
                         .font(DesignConstants.bodyFont)
@@ -241,7 +237,6 @@ struct LoginView: View {
                         .textInputAutocapitalization(.never)
                 }
             }
-            
             // Login button
             Button(action: login) {
                 Text("Sign In")
@@ -253,20 +248,17 @@ struct LoginView: View {
                     .cornerRadius(DesignConstants.mediumCornerRadius)
             }
             .disabled(!canLogin)
-            
             // Sign Up link
             HStack {
                 Text("Don't have an account?")
                     .font(DesignConstants.bodyFont)
                     .foregroundColor(DesignConstants.textColor.opacity(0.7))
-                
                 Button("Sign Up") {
                     appState.navigateTo(.signUp)
                 }
                 .font(DesignConstants.bodyFont)
                 .foregroundColor(DesignConstants.primaryColor)
             }
-            
             // Google Sign-In Button (UI only)
             Button(action: handleGoogleSignIn) {
                 HStack {
@@ -283,7 +275,6 @@ struct LoginView: View {
                 .cornerRadius(DesignConstants.mediumCornerRadius)
             }
             .padding(.vertical, DesignConstants.smallSpacing)
-            
             Spacer()
         }
         .padding(.horizontal, DesignConstants.largeSpacing)

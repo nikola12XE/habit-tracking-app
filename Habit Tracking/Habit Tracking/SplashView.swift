@@ -2,9 +2,7 @@ import SwiftUI
 
 struct SplashView: View {
     @StateObject private var appState = AppStateManager.shared
-    @State private var showSignUpSheet = false
-    @State private var showLoginSheet = false
-    
+
     var body: some View {
         print("SplashView loaded")
         return ZStack {
@@ -73,8 +71,7 @@ struct SplashView: View {
                 Spacer()
                 HStack(spacing: 8) {
                     Button(action: {
-                        print("Sign Up kliknut")
-                        showSignUpSheet = true
+                        appState.navigateTo(.signUp)
                     }) {
                         Text("Sign Up")
                             .font(.custom("Inter_28pt-Bold", size: 16))
@@ -86,10 +83,7 @@ struct SplashView: View {
                             .tracking(-0.64)
                     }
                     Button(action: {
-                        print("Set your Goal kliknut")
-                        showLoginSheet = false
-                        showSignUpSheet = false
-                        AppStateManager.shared.navigateTo(.goalEntry)
+                        appState.navigateTo(.goalEntry)
                     }) {
                         Text("Set your Goal")
                             .font(.custom("Inter_28pt-Bold", size: 16))
@@ -107,12 +101,6 @@ struct SplashView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(width: 440, height: 956)
-        .sheet(isPresented: $showSignUpSheet) {
-            SignUpView()
-        }
-        .sheet(isPresented: $showLoginSheet) {
-            LoginView()
-        }
     }
 }
 

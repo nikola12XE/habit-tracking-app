@@ -17,7 +17,7 @@ struct Habit_TrackingApp: App {
     
     var body: some Scene {
         WindowGroup {
-            SplashView()
+            ContentView()
                 .environment(\.managedObjectContext, coreDataManager.container.viewContext)
         }
     }
