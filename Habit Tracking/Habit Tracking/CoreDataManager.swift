@@ -8,7 +8,6 @@ class CoreDataManager: ObservableObject {
     
     init() {
         container = NSPersistentContainer(name: "HabitTrackingModel")
-        
         container.loadPersistentStores { description, error in
             if let error = error {
                 print("Core Data failed to load: \(error.localizedDescription)")
@@ -34,7 +33,7 @@ class CoreDataManager: ObservableObject {
         let goal = Goal(context: context)
         goal.id = UUID()
         goal.goalText = text
-        goal.selectedDays = selectedDays
+        goal.selectedDays = selectedDays.map { NSNumber(value: $0) } as NSArray
         goal.reminderEnabled = reminderEnabled
         goal.reminderTime = reminderTime
         goal.createdAt = Date()

@@ -152,7 +152,8 @@ struct ProfileView: View {
                         .font(DesignConstants.bodyFont)
                         .foregroundColor(DesignConstants.textColor)
                     
-                    if let selectedDays = goal.selectedDays, !selectedDays.isEmpty {
+                    if let nsNumbers = goal.selectedDays as? [NSNumber], !nsNumbers.isEmpty {
+                        let selectedDays = nsNumbers.map { $0.intValue }
                         Text("Days: \(formatSelectedDays(selectedDays))")
                             .font(DesignConstants.captionFont)
                             .foregroundColor(DesignConstants.textColor.opacity(0.7))

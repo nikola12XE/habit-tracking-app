@@ -4,8 +4,7 @@ struct SplashView: View {
     @StateObject private var appState = AppStateManager.shared
 
     var body: some View {
-        print("SplashView loaded")
-        return ZStack {
+        ZStack {
             // Pozadina
             Color(red: 0.93, green: 0.93, blue: 0.93) // #ededed
                 .ignoresSafeArea()

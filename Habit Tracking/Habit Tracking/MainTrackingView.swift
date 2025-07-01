@@ -121,7 +121,8 @@ struct MainTrackingView: View {
                         .foregroundColor(DesignConstants.textColor)
                     
                     // Show available days info
-                    if let goal = currentGoal, let selectedDays = goal.selectedDays, !selectedDays.isEmpty {
+                    if let goal = currentGoal, let nsNumbers = goal.selectedDays as? [NSNumber], !nsNumbers.isEmpty {
+                        let selectedDays = nsNumbers.map { $0.intValue }
                         let availableDays = countAvailableDaysInMonth()
                         Text("\(availableDays) days to work on")
                             .font(DesignConstants.captionFont)
@@ -203,14 +204,14 @@ struct MainTrackingView: View {
     }
     
     private func shouldShowDay(_ date: Date) -> Bool {
-        guard let goal = currentGoal, let selectedDays = goal.selectedDays else {
+        guard let goal = currentGoal,
+              let nsNumbers = goal.selectedDays as? [NSNumber] else {
             return true // Show all days if no goal or no selected days
         }
-        
+        let selectedDays = nsNumbers.map { $0.intValue }
         let calendar = Calendar.current
         let weekday = calendar.component(.weekday, from: date)
         let adjustedWeekday = (weekday + 5) % 7 // Convert to Monday = 0, Sunday = 6
-        
         return selectedDays.contains(adjustedWeekday)
     }
     
