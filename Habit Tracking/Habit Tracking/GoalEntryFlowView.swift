@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import UIKit
 
 struct GoalEntryFlowView: View {
     @StateObject private var appState = AppStateManager.shared
@@ -15,6 +16,7 @@ struct GoalEntryFlowView: View {
     @State private var keyboardHeight: CGFloat = 0
     @State private var slideDirection: SlideDirection = .forward
     @State private var headerTextBottom: CGFloat = 0
+    @FocusState private var isTextFieldFocused: Bool
     
     enum SlideDirection {
         case forward, backward
@@ -25,68 +27,60 @@ struct GoalEntryFlowView: View {
             Color(red: 0.93, green: 0.93, blue: 0.93).ignoresSafeArea()
             
             if currentPage == 0 {
-                VStack(spacing: 0) {
-                    // Progress dots
-                    HStack(spacing: 12) {
-                        ForEach(0..<3) { index in
-                            ProgressDot(
-                                isActive: index == currentPage,
-                                isCompleted: index < currentPage,
-                                index: index
-                            )
+                ZStack(alignment: .top) {
+                    VStack(spacing: 0) {
+                        // Progress dots
+                        HStack(spacing: 12) {
+                            ForEach(0..<3) { index in
+                                ProgressDot(
+                                    isActive: index == currentPage,
+                                    isCompleted: index < currentPage,
+                                    index: index
+                                )
+                            }
                         }
-                    }
-                    .padding(.top, 40)
-                    // Header
-                    ZStack(alignment: .top) {
-                        Text("MY BIGGEST\nGOAL IS TO")
-                            .font(.custom("Thunder-BoldLC", size: 54))
-                            .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
-                            .multilineTextAlignment(.center)
-                            .padding(.top, 66)
-                            .padding(.bottom, 32)
-                        GeometryReader { headerGeo in
-                            Color.clear.preference(key: HeaderBottomKey.self, value: headerGeo.frame(in: .global).maxY)
+                        .padding(.top, 40)
+                        // Header u dva reda
+                        VStack(spacing: 0) {
+                            Text("MY BIGGEST")
+                                .font(.custom("Thunder-BoldLC", size: 54))
+                                .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                                .multilineTextAlignment(.center)
+                            Text("GOAL IS TO")
+                                .font(.custom("Thunder-BoldLC", size: 54))
+                                .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                                .multilineTextAlignment(.center)
                         }
+                        .padding(.top, 66)
+                        .padding(.bottom, 32)
                     }
-                    .background(GeometryReader { proxy in
-                        Color.clear.preference(key: HeaderBottomKey.self, value: proxy.frame(in: .global).maxY)
-                    })
-                    .background(PreferenceReader(headerTextBottom: $headerTextBottom))
-                    Spacer(minLength: 0)
-                    GeometryReader { geo in
-                        let buttonHeight: CGFloat = 62
-                        let buttonBottomPadding: CGFloat = 24
-                        let buttonY = geo.size.height - (keyboardHeight > 0 ? keyboardHeight + buttonBottomPadding : buttonBottomPadding) - buttonHeight
-                        let headerBottom = headerTextBottom
-                        let centerY = (headerBottom + buttonY) / 2
+                    .ignoresSafeArea(.keyboard, edges: .top)
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 0)
                         VStack(spacing: 0) {
                             AnimatedTypewriterTextField(goalText: $goalText)
-                                .minimumScaleFactor(1)
-                                .lineLimit(1)
                             Text("Enter your goal")
                                 .font(.system(size: 14, weight: .regular))
                                 .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
                                 .padding(.top, 14)
                         }
-                        .frame(width: geo.size.width)
-                        .position(x: geo.size.width / 2, y: centerY)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 0)
+                        Spacer(minLength: 0)
+                        Button(action: handleContinue) {
+                            Text("Continue")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
+                                .frame(width: 200, height: 62)
+                                .background(canContinue ? Color.black : Color.black.opacity(0.05))
+                                .cornerRadius(100)
+                        }
+                        .disabled(!canContinue)
+                        .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 24)
+                        .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
                     }
-                    .ignoresSafeArea(.keyboard)
                 }
-                .safeAreaInset(edge: .bottom) {
-                    Button(action: handleContinue) {
-                        Text("Continue")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
-                            .frame(width: 200, height: 62)
-                            .background(canContinue ? Color.black : Color.black.opacity(0.05))
-                            .cornerRadius(100)
-                    }
-                    .disabled(!canContinue)
-                    .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 24)
-                    .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
-                }
+                .ignoresSafeArea(.keyboard)
             } else if currentPage == 1 {
                 VStack(spacing: 0) {
                     // Progress dots
@@ -452,95 +446,70 @@ struct ReminderPage: View {
 
 struct AnimatedTypewriterTextField: View {
     @Binding var goalText: String
-    @State private var isEditing = false
     @FocusState private var isFocused: Bool
+    @State private var isEditing = false
     @State private var placeholderIndex = 0
     @State private var displayedPlaceholder = ""
     @State private var typing = true
     @State private var charIndex = 0
     @State private var erase = false
-    @State private var textWidth: CGFloat = 215
+
     let placeholders = [
-        "Workout",
-        "Read a Book",
-        "Learn Spanish",
-        "Cook More",
-        "Meditate",
-        "Walk Outside",
-        "Sleep Early"
+        "Workout", "Read a Book", "Learn Spanish", "Cook More", "Meditate", "Walk Outside", "Sleep Early"
     ]
-    let minWidth: CGFloat = 215
+    let width: CGFloat = 215
     let height: CGFloat = 52
     let placeholderFont = Font.custom("Inter_24pt-SemiBold", size: 16)
     let typingSpeed = 0.12
     let pauseDuration = 1.2
-    let horizontalMargin: CGFloat = 18
-    
+
     var body: some View {
-        GeometryReader { geo in
-            let maxWidth = geo.size.width - 2 * horizontalMargin
-            ZStack(alignment: .center) {
-                // Pozadina i border
-                RoundedRectangle(cornerRadius: 38)
-                    .fill(Color(red: 0.894, green: 0.894, blue: 0.894))
-                    .frame(width: inputWidth(maxWidth: maxWidth), height: height)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 38)
-                            .stroke(Color(red: 0.46, green: 0.46, blue: 0.46).opacity(0.28), lineWidth: 1)
-                    )
-                // Invisible text for width calculation
-                Text(goalText.isEmpty ? displayedPlaceholder : goalText)
+        ZStack(alignment: .center) {
+            RoundedRectangle(cornerRadius: 38)
+                .fill(Color(red: 0.894, green: 0.894, blue: 0.894))
+                .frame(width: width, height: height)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 38)
+                        .stroke(Color(red: 0.46, green: 0.46, blue: 0.46).opacity(0.28), lineWidth: 1)
+                )
+            TextField("", text: $goalText, onEditingChanged: { editing in
+                isEditing = editing
+            })
+            .focused($isFocused)
+            .textFieldStyle(PlainTextFieldStyle())
+            .frame(width: width, height: height)
+            .font(placeholderFont)
+            .tracking(-0.16)
+            .foregroundColor(.black)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 24)
+            .keyboardType(.default)
+            .submitLabel(.done)
+            if goalText.isEmpty && !isEditing {
+                Text(displayedPlaceholder)
                     .font(placeholderFont)
                     .tracking(-0.16)
-                    .background(GeometryReader { proxy in
-                        Color.clear.onAppear { textWidth = max(proxy.size.width + 40, minWidth) }
-                            .onChange(of: goalText) { _ in textWidth = max(proxy.size.width + 40, minWidth) }
-                    })
-                    .opacity(0)
-                // TextField
-                TextField("", text: $goalText, onEditingChanged: { editing in
-                    isEditing = editing
-                })
-                .focused($isFocused)
-                .frame(width: inputWidth(maxWidth: maxWidth), height: height)
-                .font(placeholderFont)
-                .tracking(-0.16)
-                .foregroundColor(.black)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
-                // Typewriter placeholder
-                if goalText.isEmpty && !isEditing {
-                    Text(displayedPlaceholder)
-                        .font(placeholderFont)
-                        .tracking(-0.16)
-                        .foregroundColor(Color.gray.opacity(0.6))
-                        .frame(width: inputWidth(maxWidth: maxWidth), height: height)
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
-            .contentShape(Rectangle()) // Make entire area tappable
-            .onTapGesture {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    isFocused = true
-                }
-            }
-            .onAppear {
-                startTypewriter()
-            }
-            .onChange(of: goalText) { newValue in
-                if !newValue.isEmpty {
-                    isFocused = true
-                }
+                    .foregroundColor(Color.gray.opacity(0.6))
+                    .frame(width: width, height: height)
+                    .multilineTextAlignment(.center)
+                    .allowsHitTesting(false)
             }
         }
-        .frame(height: height)
+        .frame(width: width, height: height)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            isFocused = true
+        }
+        .onAppear {
+            startTypewriter()
+        }
+        .onChange(of: goalText) { newValue in
+            if !newValue.isEmpty {
+                isFocused = true
+            }
+        }
     }
-    
-    private func inputWidth(maxWidth: CGFloat) -> CGFloat {
-        min(max(textWidth, minWidth), maxWidth)
-    }
-    
+
     private func startTypewriter() {
         displayedPlaceholder = ""
         typing = true
@@ -808,6 +777,65 @@ struct PreferenceReader: View {
         }
         .onPreferenceChange(HeaderBottomKey.self) { value in
             headerTextBottom = value
+        }
+    }
+}
+
+struct UIKitTextFieldWrapper: UIViewRepresentable {
+    @Binding var text: String
+    @Binding var isFirstResponder: Bool
+    var font: UIFont?
+    var textColor: UIColor = .black
+    var textAlignment: NSTextAlignment = .center
+    var onEditingChanged: ((Bool) -> Void)? = nil
+
+    func makeUIView(context: Context) -> UITextField {
+        let textField = UITextField()
+        textField.delegate = context.coordinator
+        textField.font = font
+        textField.textColor = textColor
+        textField.textAlignment = textAlignment
+        textField.addTarget(context.coordinator, action: #selector(Coordinator.textChanged), for: .editingChanged)
+        textField.backgroundColor = UIColor(red: 0.894, green: 0.894, blue: 0.894, alpha: 1)
+        textField.layer.cornerRadius = 38
+        textField.layer.borderColor = UIColor(red: 0.46, green: 0.46, blue: 0.46, alpha: 0.28).cgColor
+        textField.layer.borderWidth = 1
+        return textField
+    }
+
+    func updateUIView(_ uiView: UITextField, context: Context) {
+        uiView.text = text
+        uiView.font = font
+        uiView.textColor = textColor
+        uiView.textAlignment = textAlignment
+        if isFirstResponder && !uiView.isFirstResponder {
+            print("🟢 Calling becomeFirstResponder on UITextField")
+            uiView.becomeFirstResponder()
+        } else if !isFirstResponder && uiView.isFirstResponder {
+            print("🟡 Calling resignFirstResponder on UITextField")
+            uiView.resignFirstResponder()
+        }
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, UITextFieldDelegate {
+        var parent: UIKitTextFieldWrapper
+        init(_ parent: UIKitTextFieldWrapper) {
+            self.parent = parent
+        }
+        @objc func textChanged(_ sender: UITextField) {
+            parent.text = sender.text ?? ""
+        }
+        func textFieldDidBeginEditing(_ textField: UITextField) {
+            parent.isFirstResponder = true
+            parent.onEditingChanged?(true)
+        }
+        func textFieldDidEndEditing(_ textField: UITextField) {
+            parent.isFirstResponder = false
+            parent.onEditingChanged?(false)
         }
     }
 }

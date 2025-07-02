@@ -69,31 +69,31 @@ struct SplashView: View {
             VStack {
                 Spacer()
                 HStack(spacing: 8) {
-                    Button(action: {
-                        appState.navigateTo(.signUp)
-                    }) {
-                        Text("Sign Up")
+                Button(action: {
+                    appState.navigateTo(.signUp)
+                }) {
+                    Text("Sign Up")
                             .font(.custom("Inter_28pt-Bold", size: 16))
-                            .foregroundColor(.white)
+                        .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
-                            .background(Color.black)
-                            .cornerRadius(100)
-                            .tracking(-0.64)
-                    }
-                    Button(action: {
-                        appState.navigateTo(.goalEntry)
-                    }) {
-                        Text("Set your Goal")
-                            .font(.custom("Inter_28pt-Bold", size: 16))
-                            .foregroundColor(.black)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(Color.white)
-                            .cornerRadius(100)
-                            .tracking(-0.64)
-                    }
+                        .background(Color.black)
+                        .cornerRadius(100)
+                        .tracking(-0.64)
                 }
+                Button(action: {
+                    appState.navigateTo(.goalEntry)
+                }) {
+                    Text("Set your Goal")
+                            .font(.custom("Inter_28pt-Bold", size: 16))
+                        .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                        .background(Color.white)
+                        .cornerRadius(100)
+                        .tracking(-0.64)
+                }
+            }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 45)
             }
