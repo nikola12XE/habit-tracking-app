@@ -122,7 +122,6 @@ struct MainTrackingView: View {
                     
                     // Show available days info
                     if let goal = currentGoal, let nsNumbers = goal.selectedDays as? [NSNumber], !nsNumbers.isEmpty {
-                        let selectedDays = nsNumbers.map { $0.intValue }
                         let availableDays = countAvailableDaysInMonth()
                         Text("\(availableDays) days to work on")
                             .font(DesignConstants.captionFont)

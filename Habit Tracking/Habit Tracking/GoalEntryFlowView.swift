@@ -24,11 +24,11 @@ struct GoalEntryFlowView: View {
                     // Progress dots
                     HStack(spacing: 12) {
                         ForEach(0..<3) { index in
-                            Capsule()
-                                .fill(index == currentPage ? Color.black : Color.gray.opacity(0.6))
-                                .frame(width: index == currentPage ? 44 : 10, height: 10)
-                                .animation(.easeInOut(duration: 0.35), value: currentPage)
-                                .cornerRadius(100)
+                            ProgressDot(
+                                isActive: index == currentPage,
+                                isCompleted: index < currentPage,
+                                index: index
+                            )
                         }
                     }
                     .padding(.top, 40)
@@ -43,6 +43,13 @@ struct GoalEntryFlowView: View {
                     // Input polje centrirano između headera i dugmeta
                     AnimatedTypewriterTextField(goalText: $goalText)
                         .padding(.top, -15)
+                    
+                    // Enter your goal text ispod input polja
+                    Text("Enter your goal")
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
+                        .padding(.top, 14)
+                    
                     Spacer()
                     // Continue dugme
                     Button(action: handleContinue) {
@@ -64,23 +71,22 @@ struct GoalEntryFlowView: View {
                     // Progress dots
                     HStack(spacing: 12) {
                         ForEach(0..<3) { index in
-                            Capsule()
-                                .fill(index == currentPage ? Color.black : Color.gray.opacity(0.6))
-                                .frame(width: index == currentPage ? 44 : 10, height: 10)
-                                .animation(.easeInOut(duration: 0.35), value: currentPage)
-                                .cornerRadius(100)
+                            ProgressDot(
+                                isActive: index == currentPage,
+                                isCompleted: index < currentPage,
+                                index: index
+                            )
                         }
                     }
                     .padding(.top, 40)
                     
-                    Spacer()
-                    
-                    // Header
-                    Text("AND I NEED TO WORK ON IT")
+                    // Header - ista veličina i pozicija kao na prvom koraku
+                    Text("AND I NEED TO\nWORK ON IT")
                         .font(.custom("Thunder-BoldLC", size: 54))
                         .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, 20)
+                        .padding(.top, 66)
+                        .padding(.bottom, 32)
                     
                     Spacer()
                     
@@ -102,10 +108,10 @@ struct GoalEntryFlowView: View {
                     }
                     .padding(.horizontal, 46)
                     
-                    // Select frequency text
+                    // Select frequency text - promenjen u regular font
                     Text("Select frequency")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
                         .padding(.top, 14)
                     
                     Spacer()
@@ -124,6 +130,15 @@ struct GoalEntryFlowView: View {
                 }
             }
         }
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width > 100 && currentPage > 0 {
+                        // Swipe right to go back
+                        handleBack()
+                    }
+                }
+        )
         .onAppear {
             subscribeToKeyboardNotifications()
         }
@@ -165,7 +180,7 @@ struct GoalEntryFlowView: View {
     
     private func handleContinue() {
         if currentPage < 2 {
-            withAnimation {
+            withAnimation(.easeInOut(duration: 0.6)) {
                 currentPage += 1
             }
         } else {
@@ -173,6 +188,14 @@ struct GoalEntryFlowView: View {
                 updateGoal()
             } else {
                 createGoal()
+            }
+        }
+    }
+    
+    private func handleBack() {
+        if currentPage > 0 {
+            withAnimation(.easeInOut(duration: 0.6)) {
+                currentPage -= 1
             }
         }
     }
@@ -512,6 +535,39 @@ struct DaySelectionButton: View {
         }
         .scaleEffect(isSelected ? 1.0 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isSelected)
+    }
+}
+
+struct ProgressDot: View {
+    let isActive: Bool
+    let isCompleted: Bool
+    let index: Int
+    
+    var body: some View {
+        Capsule()
+            .fill(dotColor)
+            .frame(width: dotWidth, height: 10)
+            .animation(.easeInOut(duration: 0.6), value: dotWidth)
+            .animation(.easeInOut(duration: 0.6), value: dotColor)
+            .cornerRadius(100)
+    }
+    
+    private var dotColor: Color {
+        if isActive {
+            return Color.black
+        } else if isCompleted {
+            return Color.black
+        } else {
+            return Color.gray.opacity(0.6)
+        }
+    }
+    
+    private var dotWidth: CGFloat {
+        if isActive {
+            return 44
+        } else {
+            return 10
+        }
     }
 }
 
