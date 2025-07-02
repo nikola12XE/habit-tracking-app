@@ -57,16 +57,7 @@ struct GoalEntryFlowView: View {
                     .ignoresSafeArea(.keyboard, edges: .top)
                     VStack(spacing: 0) {
                         Spacer(minLength: 0)
-                        VStack(spacing: 0) {
-                            AnimatedTypewriterTextField(goalText: $goalText)
-                            Text("Enter your goal")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
-                                .padding(.top, 14)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 0)
-                        Spacer(minLength: 0)
+                        GoalInputPositioner(goalText: $goalText, keyboardHeight: keyboardHeight)
                         Button(action: handleContinue) {
                             Text("Continue")
                                 .font(.system(size: 16, weight: .bold))
@@ -310,6 +301,18 @@ struct GoalEntryFlowView: View {
     }
     
     private let dayNames = ["M", "T", "W", "T", "F", "S", "S"]
+    
+    private func inputCenterY(geo: GeometryProxy, keyboardHeight: CGFloat) -> CGFloat {
+        let headerHeight: CGFloat = 40 + 66 + 32 + 54 * 2
+        let buttonHeight: CGFloat = 62
+        let buttonBottomPadding: CGFloat = 24
+        let buttonY = geo.size.height - (keyboardHeight > 0 ? keyboardHeight + buttonBottomPadding : buttonBottomPadding) - buttonHeight
+        if keyboardHeight > 0 {
+            return (headerHeight + buttonY) / 2
+        } else {
+            return geo.size.height * 0.38
+        }
+    }
 }
 
 // MARK: - Page 1: Goal Text
@@ -837,6 +840,39 @@ struct UIKitTextFieldWrapper: UIViewRepresentable {
             parent.isFirstResponder = false
             parent.onEditingChanged?(false)
         }
+    }
+}
+
+struct CenteredInputBlock: View {
+    @Binding var goalText: String
+    var body: some View {
+        VStack(spacing: 0) {
+            AnimatedTypewriterTextField(goalText: $goalText)
+            Text("Enter your goal")
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
+                .padding(.top, 14)
+        }
+    }
+}
+
+struct GoalInputPositioner: View {
+    @Binding var goalText: String
+    var keyboardHeight: CGFloat
+    var body: some View {
+        GeometryReader { geo in
+            let headerHeight: CGFloat = 40 + 66 + 32 + 54 * 2
+            let buttonHeight: CGFloat = 62
+            let buttonBottomPadding: CGFloat = 24
+            let buttonY = geo.size.height - (keyboardHeight > 0 ? keyboardHeight + buttonBottomPadding : buttonBottomPadding) - buttonHeight
+            let centerY: CGFloat = keyboardHeight > 0
+                ? (headerHeight + buttonY) / 2
+                : geo.size.height * 0.38
+            CenteredInputBlock(goalText: $goalText)
+                .frame(width: geo.size.width)
+                .position(x: geo.size.width / 2, y: centerY)
+        }
+        .ignoresSafeArea(.keyboard)
     }
 }
 
