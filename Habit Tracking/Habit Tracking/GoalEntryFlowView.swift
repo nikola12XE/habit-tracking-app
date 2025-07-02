@@ -7,20 +7,25 @@ struct GoalEntryFlowView: View {
     
     @State private var currentPage = 0
     @State private var goalText = ""
-    @State private var selectedDays: Set<Int> = []
+    @State private var selectedDays: Set<Int> = [0, 1, 2, 3, 4] // Pre-select MTWTF
     @State private var reminderEnabled = false
     @State private var reminderTime = Calendar.current.date(from: DateComponents(hour: 9, minute: 0)) ?? Date()
     @State private var isEditing = false
     @State private var existingGoal: Goal?
     @State private var keyboardHeight: CGFloat = 0
+    @State private var slideDirection: SlideDirection = .forward
+    @State private var headerTextBottom: CGFloat = 0
+    
+    enum SlideDirection {
+        case forward, backward
+    }
     
     var body: some View {
         ZStack {
             Color(red: 0.93, green: 0.93, blue: 0.93).ignoresSafeArea()
             
             if currentPage == 0 {
-                // Goal Entry Page
-                VStack {
+                VStack(spacing: 0) {
                     // Progress dots
                     HStack(spacing: 12) {
                         ForEach(0..<3) { index in
@@ -32,42 +37,58 @@ struct GoalEntryFlowView: View {
                         }
                     }
                     .padding(.top, 40)
-                    // Header u dva reda
-                    Text("MY BIGGEST\nGOAL IS TO")
-                        .font(.custom("Thunder-BoldLC", size: 54))
-                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
-                        .multilineTextAlignment(.center)
-                        .padding(.top, 66) // increased by 30px
-                        .padding(.bottom, 32)
-                    Spacer()
-                    // Input polje centrirano između headera i dugmeta
-                    AnimatedTypewriterTextField(goalText: $goalText)
-                        .padding(.top, -15)
-                    
-                    // Enter your goal text ispod input polja
-                    Text("Enter your goal")
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
-                        .padding(.top, 14)
-                    
-                    Spacer()
-                    // Continue dugme
+                    // Header
+                    ZStack(alignment: .top) {
+                        Text("MY BIGGEST\nGOAL IS TO")
+                            .font(.custom("Thunder-BoldLC", size: 54))
+                            .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 66)
+                            .padding(.bottom, 32)
+                        GeometryReader { headerGeo in
+                            Color.clear.preference(key: HeaderBottomKey.self, value: headerGeo.frame(in: .global).maxY)
+                        }
+                    }
+                    .background(GeometryReader { proxy in
+                        Color.clear.preference(key: HeaderBottomKey.self, value: proxy.frame(in: .global).maxY)
+                    })
+                    .background(PreferenceReader(headerTextBottom: $headerTextBottom))
+                    Spacer(minLength: 0)
+                    GeometryReader { geo in
+                        let buttonHeight: CGFloat = 62
+                        let buttonBottomPadding: CGFloat = 24
+                        let buttonY = geo.size.height - (keyboardHeight > 0 ? keyboardHeight + buttonBottomPadding : buttonBottomPadding) - buttonHeight
+                        let headerBottom = headerTextBottom
+                        let centerY = (headerBottom + buttonY) / 2
+                        VStack(spacing: 0) {
+                            AnimatedTypewriterTextField(goalText: $goalText)
+                                .minimumScaleFactor(1)
+                                .lineLimit(1)
+                            Text("Enter your goal")
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
+                                .padding(.top, 14)
+                        }
+                        .frame(width: geo.size.width)
+                        .position(x: geo.size.width / 2, y: centerY)
+                    }
+                    .ignoresSafeArea(.keyboard)
+                }
+                .safeAreaInset(edge: .bottom) {
                     Button(action: handleContinue) {
                         Text("Continue")
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(goalText.isEmpty ? Color.black.opacity(0.4) : .white)
+                            .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
                             .frame(width: 200, height: 62)
-                            .background(goalText.isEmpty ? Color.black.opacity(0.05) : Color.black)
+                            .background(canContinue ? Color.black : Color.black.opacity(0.05))
                             .cornerRadius(100)
                     }
-                    .disabled(goalText.isEmpty)
-                    .padding(.bottom, 24)
+                    .disabled(!canContinue)
+                    .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 24)
+                    .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
                 }
-                .padding(.bottom, keyboardHeight)
-                .animation(.easeOut(duration: 0.25), value: keyboardHeight)
             } else if currentPage == 1 {
-                // Day Selection Page
-                VStack {
+                VStack(spacing: 0) {
                     // Progress dots
                     HStack(spacing: 12) {
                         ForEach(0..<3) { index in
@@ -79,54 +100,99 @@ struct GoalEntryFlowView: View {
                         }
                     }
                     .padding(.top, 40)
-                    
-                    // Header - ista veličina i pozicija kao na prvom koraku
+                    // Header
                     Text("AND I NEED TO\nWORK ON IT")
                         .font(.custom("Thunder-BoldLC", size: 54))
                         .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
                         .multilineTextAlignment(.center)
                         .padding(.top, 66)
                         .padding(.bottom, 32)
-                    
-                    Spacer()
-                    
-                    // Day selection
-                    HStack(spacing: 2) {
-                        ForEach(0..<7) { dayIndex in
-                            DaySelectionButton(
-                                day: dayNames[dayIndex],
-                                isSelected: selectedDays.contains(dayIndex),
-                                action: {
-                                    if selectedDays.contains(dayIndex) {
-                                        selectedDays.remove(dayIndex)
-                                    } else {
-                                        selectedDays.insert(dayIndex)
+                    Spacer(minLength: 0)
+                }
+                GeometryReader { geo in
+                    let headerBottom: CGFloat = 40 + 66 + 32 + 54 * 2
+                    let buttonHeight: CGFloat = 62
+                    let buttonBottomPadding: CGFloat = 12
+                    let buttonY = geo.size.height - buttonBottomPadding - buttonHeight
+                    let centerY = (headerBottom + buttonY) / 2
+                    VStack(spacing: 0) {
+                        HStack(spacing: 2) {
+                            ForEach(0..<7) { dayIndex in
+                                DaySelectionButton(
+                                    day: dayNames[dayIndex],
+                                    isSelected: selectedDays.contains(dayIndex),
+                                    action: {
+                                        if selectedDays.contains(dayIndex) {
+                                            selectedDays.remove(dayIndex)
+                                        } else {
+                                            selectedDays.insert(dayIndex)
+                                        }
                                     }
-                                }
-                            )
+                                )
+                            }
                         }
+                        .padding(.horizontal, 46)
+                        Text("Select frequency")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
+                            .padding(.top, 14)
                     }
-                    .padding(.horizontal, 46)
-                    
-                    // Select frequency text - promenjen u regular font
-                    Text("Select frequency")
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
-                        .padding(.top, 14)
-                    
-                    Spacer()
-                    
-                    // Continue button
+                    .frame(width: geo.size.width)
+                    .position(x: geo.size.width / 2, y: centerY)
+                }
+                .safeAreaInset(edge: .bottom) {
                     Button(action: handleContinue) {
                         Text("Continue")
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(selectedDays.isEmpty ? Color.black.opacity(0.4) : .white)
+                            .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
                             .frame(width: 200, height: 62)
-                            .background(selectedDays.isEmpty ? Color.black.opacity(0.05) : Color.black)
+                            .background(canContinue ? Color.black : Color.black.opacity(0.05))
                             .cornerRadius(100)
                     }
-                    .disabled(selectedDays.isEmpty)
-                    .padding(.bottom, 24)
+                    .disabled(!canContinue)
+                    .padding(.bottom, 12)
+                    .animation(.easeInOut(duration: 0.3), value: canContinue)
+                }
+            } else {
+                // Reminder Page - Figma dizajn
+                VStack(spacing: 0) {
+                    // Progress dots
+                    HStack(spacing: 12) {
+                        ForEach(0..<3) { index in
+                            ProgressDot(
+                                isActive: index == currentPage,
+                                isCompleted: index < currentPage,
+                                index: index
+                            )
+                        }
+                    }
+                    .padding(.top, 40)
+                    // Header
+                    Text("AT")
+                        .font(.custom("Thunder-BoldLC", size: 54))
+                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                        .multilineTextAlignment(.center)
+                        .padding(.top, 66)
+                        .padding(.bottom, 32)
+                    Spacer(minLength: 0)
+                    ReminderInputView(
+                        reminderEnabled: $reminderEnabled,
+                        reminderTime: $reminderTime
+                    )
+                    Spacer(minLength: 0)
+                }
+                .safeAreaInset(edge: .bottom) {
+                    Button(action: handleContinue) {
+                        Text("Continue")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
+                            .frame(width: 200, height: 62)
+                            .background(canContinue ? Color.black : Color.black.opacity(0.05))
+                            .cornerRadius(100)
+                    }
+                    .disabled(!canContinue)
+                    .padding(.bottom, 12)
+                    .animation(.easeInOut(duration: 0.3), value: canContinue)
                 }
             }
         }
@@ -135,7 +201,12 @@ struct GoalEntryFlowView: View {
                 .onEnded { value in
                     if value.translation.width > 100 && currentPage > 0 {
                         // Swipe right to go back
+                        slideDirection = .backward
                         handleBack()
+                    } else if value.translation.width < -100 && currentPage < 2 && canContinue {
+                        // Swipe left to go forward only if current step is completed
+                        slideDirection = .forward
+                        handleContinue()
                     }
                 }
         )
@@ -145,6 +216,7 @@ struct GoalEntryFlowView: View {
         .onDisappear {
             unsubscribeFromKeyboardNotifications()
         }
+        .ignoresSafeArea(.keyboard)
     }
     
     private var canContinue: Bool {
@@ -171,7 +243,7 @@ struct GoalEntryFlowView: View {
             if let nsNumbers = goal.selectedDays as? [NSNumber] {
                 selectedDays = Set(nsNumbers.map { $0.intValue })
             } else {
-                selectedDays = []
+                selectedDays = [0, 1, 2, 3, 4] // Default to MTWTF if no existing data
             }
             reminderEnabled = goal.reminderEnabled
             reminderTime = goal.reminderTime ?? Calendar.current.date(from: DateComponents(hour: 9, minute: 0)) ?? Date()
@@ -179,11 +251,12 @@ struct GoalEntryFlowView: View {
     }
     
     private func handleContinue() {
-        if currentPage < 2 {
-            withAnimation(.easeInOut(duration: 0.6)) {
+        if currentPage < 2 && canContinue {
+            slideDirection = .forward
+            withAnimation(.easeInOut(duration: 0.4)) {
                 currentPage += 1
             }
-        } else {
+        } else if currentPage == 2 {
             if isEditing {
                 updateGoal()
             } else {
@@ -194,7 +267,8 @@ struct GoalEntryFlowView: View {
     
     private func handleBack() {
         if currentPage > 0 {
-            withAnimation(.easeInOut(duration: 0.6)) {
+            slideDirection = .backward
+            withAnimation(.easeInOut(duration: 0.4)) {
                 currentPage -= 1
             }
         }
@@ -416,7 +490,8 @@ struct AnimatedTypewriterTextField: View {
                     )
                 // Invisible text for width calculation
                 Text(goalText.isEmpty ? displayedPlaceholder : goalText)
-                    .font(goalText.isEmpty ? placeholderFont : .custom("Inter_24pt-SemiBold", size: 24))
+                    .font(placeholderFont)
+                    .tracking(-0.16)
                     .background(GeometryReader { proxy in
                         Color.clear.onAppear { textWidth = max(proxy.size.width + 40, minWidth) }
                             .onChange(of: goalText) { _ in textWidth = max(proxy.size.width + 40, minWidth) }
@@ -428,7 +503,8 @@ struct AnimatedTypewriterTextField: View {
                 })
                 .focused($isFocused)
                 .frame(width: inputWidth(maxWidth: maxWidth), height: height)
-                .font(.custom("Inter_24pt-SemiBold", size: 24))
+                .font(placeholderFont)
+                .tracking(-0.16)
                 .foregroundColor(.black)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -436,6 +512,7 @@ struct AnimatedTypewriterTextField: View {
                 if goalText.isEmpty && !isEditing {
                     Text(displayedPlaceholder)
                         .font(placeholderFont)
+                        .tracking(-0.16)
                         .foregroundColor(Color.gray.opacity(0.6))
                         .frame(width: inputWidth(maxWidth: maxWidth), height: height)
                         .multilineTextAlignment(.center)
@@ -567,6 +644,170 @@ struct ProgressDot: View {
             return 44
         } else {
             return 10
+        }
+    }
+}
+
+// Custom transition za header
+struct FastRemoveMove: ViewModifier {
+    let direction: GoalEntryFlowView.SlideDirection
+    let isIdentity: Bool
+    func body(content: Content) -> some View {
+        content
+            .offset(x: isIdentity ? 0 : (direction == .forward ? -160 : 160))
+            .opacity(isIdentity ? 1 : 0)
+            .animation(.easeInOut(duration: isIdentity ? 0 : 0.18), value: direction)
+    }
+}
+
+extension AnyTransition {
+    static func fastRemoveMove(direction: GoalEntryFlowView.SlideDirection) -> AnyTransition {
+        .asymmetric(
+            insertion: .move(edge: direction == .forward ? .trailing : .leading),
+            removal: .modifier(
+                active: FastRemoveMove(direction: direction, isIdentity: false),
+                identity: FastRemoveMove(direction: direction, isIdentity: true)
+            )
+        )
+    }
+}
+
+// ReminderInputView - input 180pt, centriran, switch levo, tracking -0.16
+struct ReminderInputView: View {
+    @Binding var reminderEnabled: Bool
+    @Binding var reminderTime: Date
+    @State private var showPicker = false
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            ZStack {
+                // Input tačno centriran
+                Button(action: {
+                    if !reminderEnabled {
+                        reminderEnabled = true
+                    }
+                    showPicker = true
+                }) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 38)
+                            .fill(Color(red: 0.894, green: 0.894, blue: 0.894))
+                            .frame(width: 180, height: 52)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 38)
+                                    .stroke(Color(red: 0.46, green: 0.46, blue: 0.46).opacity(0.28), lineWidth: 1)
+                            )
+                        Text(timeString)
+                            .font(.custom("Inter_24pt-SemiBold", size: 16))
+                            .tracking(-0.16)
+                            .foregroundColor(reminderEnabled ? Color(red: 0.047, green: 0.047, blue: 0.047) : Color.gray.opacity(0.6))
+                    }
+                }
+                .disabled(false)
+                .frame(width: 180, height: 52)
+                .frame(maxWidth: .infinity, alignment: .center)
+                .zIndex(1)
+                // Switch overlay, 10pt desno od inputa
+                CustomSwitch(isOn: $reminderEnabled)
+                    .frame(width: 74, height: 40)
+                    .offset(x: (180/2) + 10 + (74/2))
+                    .zIndex(2)
+            }
+            .frame(height: 52)
+            // Tekst 14pt ispod inputa
+            Text("Set Reminder")
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
+                .multilineTextAlignment(.center)
+                .padding(.top, 14)
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity)
+        .onAppear {
+            // Default state ON
+            reminderEnabled = true
+        }
+        // Sheet za time picker
+        .sheet(isPresented: $showPicker) {
+            VStack {
+                DatePicker("Select Time", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                    .datePickerStyle(WheelDatePickerStyle())
+                    .labelsHidden()
+                    .environment(\ .locale, Locale(identifier: "en_US_POSIX"))
+                Button("Done") { showPicker = false }
+                    .padding()
+            }
+            .presentationDetents([.height(300)])
+            .background(
+                Color(.systemBackground)
+                    .clipShape(RoundedCorner(radius: 200, corners: [.topLeft, .topRight]))
+                    .padding(.top, -160)
+            )
+        }
+    }
+    var timeString: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "h:mm a"
+        return formatter.string(from: reminderTime)
+    }
+}
+
+// Za overlay centriranje (nije obavezno koristiti, ali ostavljeno za preciznost)
+struct InputCenteringKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+struct CustomSwitch: View {
+    @Binding var isOn: Bool
+    var body: some View {
+        Button(action: { isOn.toggle() }) {
+            ZStack(alignment: isOn ? .trailing : .leading) {
+                RoundedRectangle(cornerRadius: 40)
+                    .fill(isOn ? Color(red: 0.308, green: 0.608, blue: 1) : Color(red: 0.828, green: 0.828, blue: 0.828))
+                    .frame(width: 74, height: 40)
+                RoundedRectangle(cornerRadius: 40)
+                    .fill(Color.white)
+                    .frame(width: 44, height: 30)
+                    .padding(.horizontal, 5)
+                    .shadow(color: .black.opacity(0.08), radius: 2, x: 0, y: 1)
+            }
+            .animation(.easeInOut(duration: 0.18), value: isOn)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// Custom shape for rounded corners
+struct RoundedCorner: Shape {
+    var radius: CGFloat = 40.0
+    var corners: UIRectCorner = .allCorners
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
+        return Path(path.cgPath)
+    }
+}
+
+// PreferenceKey za header bottom
+struct HeaderBottomKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
+// Reader za header bottom
+struct PreferenceReader: View {
+    @Binding var headerTextBottom: CGFloat
+    var body: some View {
+        GeometryReader { proxy in
+            Color.clear.preference(key: HeaderBottomKey.self, value: proxy.frame(in: .global).maxY)
+        }
+        .onPreferenceChange(HeaderBottomKey.self) { value in
+            headerTextBottom = value
         }
     }
 }
