@@ -4,6 +4,8 @@ struct SplashView: View {
     @StateObject private var appState = AppStateManager.shared
     @State private var waveOffset: CGFloat = 0
     @State private var buttonsOffset: CGFloat = 0
+    @State private var blueFlowerOffset: CGSize = .zero
+    @State private var redFlowerOffset: CGSize = .zero
 
     var body: some View {
         ZStack {
@@ -23,6 +25,7 @@ struct SplashView: View {
                     .scaleEffect(x: -1, y: -1) // horizontalni i vertikalni flip
                     .blur(radius: 8)
                     .position(x: geo.size.width - (blueWidth * 0.3) / 2 + 20, y: 415 + (552 * 1.2) / 2 - 15)
+                    .offset(blueFlowerOffset)
 
                 // Crveni cvet - 30% vidljiv levo
                 let redWidth = 294 * 1.2
@@ -33,6 +36,7 @@ struct SplashView: View {
                     .rotationEffect(.degrees(13.603))
                     .blur(radius: 8)
                     .position(x: (redWidth * 0.3) / 2, y: 399 + (504 * 1.2) / 2 - 15)
+                    .offset(redFlowerOffset)
             }
             .allowsHitTesting(false)
 
@@ -110,6 +114,8 @@ struct SplashView: View {
         withAnimation(.easeInOut(duration: 0.6)) {
             waveOffset = 200 // Spusti talas dole
             buttonsOffset = 200 // Spusti dugmad dole
+            blueFlowerOffset = CGSize(width: 200, height: 300) // Plavi cvet ide desno i dole
+            redFlowerOffset = CGSize(width: -200, height: 300) // Crveni cvet ide levo i dole
         }
         
         // Navigiraj nakon animacije
