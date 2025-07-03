@@ -25,195 +25,12 @@ struct GoalEntryFlowView: View {
     var body: some View {
         ZStack {
             Color(red: 0.93, green: 0.93, blue: 0.93).ignoresSafeArea()
-            
-            if currentPage == 0 {
-                ZStack(alignment: .top) {
-                    VStack(spacing: 0) {
-                        // Progress dots
-                        HStack(spacing: 12) {
-                            ForEach(0..<3) { index in
-                                ProgressDot(
-                                    isActive: index == currentPage,
-                                    isCompleted: index < currentPage,
-                                    index: index
-                                )
-                            }
-                        }
-                        .padding(.top, 40)
-                        // Header u dva reda
-                        VStack(spacing: 0) {
-                            Text("MY BIGGEST")
-                                .font(.custom("Thunder-BoldLC", size: 54))
-                                .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
-                                .multilineTextAlignment(.center)
-                            Text("GOAL IS TO")
-                                .font(.custom("Thunder-BoldLC", size: 54))
-                                .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
-                                .multilineTextAlignment(.center)
-                        }
-                        .padding(.top, 66)
-                        .padding(.bottom, 32)
-                    }
-                    .ignoresSafeArea(.keyboard, edges: .top)
-                    VStack(spacing: 0) {
-                        Spacer(minLength: 0)
-                        GeometryReader { geo in
-                            let headerHeight: CGFloat = 40 + 66 + 32 + 54 * 2 // progress + header paddings + 2x header font
-                            let buttonHeight: CGFloat = 62
-                            let buttonBottomPadding: CGFloat = 24
-                            // Za input, buttonY ne uključuje keyboardHeight
-                            let buttonYForInput = geo.size.height - buttonBottomPadding - buttonHeight
-                            let centerY = (headerHeight + buttonYForInput) / 2
-                            VStack(spacing: 0) {
-                                AnimatedTypewriterTextField(goalText: $goalText)
-                                Text("Enter your goal")
-                                    .font(.system(size: 14, weight: .regular))
-                                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
-                                    .padding(.top, 14)
-                            }
-                            .frame(width: geo.size.width)
-                            .position(x: geo.size.width / 2, y: centerY + (keyboardHeight > 0 ? 15 : 0))
-                            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
-                        }
-                        .ignoresSafeArea(.keyboard)
-                        Button(action: handleContinue) {
-                            Text("Continue")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
-                                .frame(width: 200, height: 62)
-                                .background(canContinue ? Color.black : Color.black.opacity(0.05))
-                                .cornerRadius(100)
-                        }
-                        .disabled(!canContinue)
-                        .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 24)
-                        .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
-                    }
-                }
-                .ignoresSafeArea(.keyboard)
-            } else if currentPage == 1 {
-                VStack(spacing: 0) {
-                    // Progress dots
-                    HStack(spacing: 12) {
-                        ForEach(0..<3) { index in
-                            ProgressDot(
-                                isActive: index == currentPage,
-                                isCompleted: index < currentPage,
-                                index: index
-                            )
-                        }
-                    }
-                    .padding(.top, 40)
-                    // Header
-                    Text("AND I NEED TO\nWORK ON IT")
-                        .font(.custom("Thunder-BoldLC", size: 54))
-                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
-                        .multilineTextAlignment(.center)
-                        .padding(.top, 66)
-                        .padding(.bottom, 32)
-                    Spacer(minLength: 0)
-                }
-                GeometryReader { geo in
-                    let headerBottom: CGFloat = 40 + 66 + 32 + 54 * 2
-                    let buttonHeight: CGFloat = 62
-                    let buttonBottomPadding: CGFloat = 12
-                    let buttonY = geo.size.height - buttonBottomPadding - buttonHeight
-                    let centerY = (headerBottom + buttonY) / 2
-                    VStack(spacing: 0) {
-                        HStack(spacing: 2) {
-                            ForEach(0..<7) { dayIndex in
-                                DaySelectionButton(
-                                    day: dayNames[dayIndex],
-                                    isSelected: selectedDays.contains(dayIndex),
-                                    action: {
-                                        if selectedDays.contains(dayIndex) {
-                                            selectedDays.remove(dayIndex)
-                                        } else {
-                                            selectedDays.insert(dayIndex)
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                        .padding(.horizontal, 46)
-                        Text("Select frequency")
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
-                            .padding(.top, 14)
-                    }
-                    .frame(width: geo.size.width)
-                    .position(x: geo.size.width / 2, y: centerY + (keyboardHeight > 0 ? 15 : 0))
-                    .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
-                }
-                .safeAreaInset(edge: .bottom) {
-                    Button(action: handleContinue) {
-                        Text("Continue")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
-                            .frame(width: 200, height: 62)
-                            .background(canContinue ? Color.black : Color.black.opacity(0.05))
-                            .cornerRadius(100)
-                    }
-                    .disabled(!canContinue)
-                    .padding(.bottom, 12)
-                    .animation(.easeInOut(duration: 0.3), value: canContinue)
-                }
-            } else {
-                // Reminder Page - Figma dizajn
-                VStack(spacing: 0) {
-                    // Progress dots
-                    HStack(spacing: 12) {
-                        ForEach(0..<3) { index in
-                            ProgressDot(
-                                isActive: index == currentPage,
-                                isCompleted: index < currentPage,
-                                index: index
-                            )
-                        }
-                    }
-                    .padding(.top, 40)
-                    // Header
-                    Text("AT")
-                        .font(.custom("Thunder-BoldLC", size: 54))
-                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
-                        .multilineTextAlignment(.center)
-                        .padding(.top, 66)
-                        .padding(.bottom, 32)
-                    Spacer(minLength: 0)
-                    ReminderInputView(
-                        reminderEnabled: $reminderEnabled,
-                        reminderTime: $reminderTime
-                    )
-                    Spacer(minLength: 0)
-                }
-                .safeAreaInset(edge: .bottom) {
-                    Button(action: handleContinue) {
-                        Text("Continue")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
-                            .frame(width: 200, height: 62)
-                            .background(canContinue ? Color.black : Color.black.opacity(0.05))
-                            .cornerRadius(100)
-                    }
-                    .disabled(!canContinue)
-                    .padding(.bottom, 12)
-                    .animation(.easeInOut(duration: 0.3), value: canContinue)
-                }
+            VStack(spacing: 0) {
+                progressDotsView
+                headerView
+                stepContentView
             }
         }
-        .gesture(
-            DragGesture()
-                .onEnded { value in
-                    if value.translation.width > 100 && currentPage > 0 {
-                        // Swipe right to go back
-                        slideDirection = .backward
-                        handleBack()
-                    } else if value.translation.width < -100 && currentPage < 2 && canContinue {
-                        // Swipe left to go forward only if current step is completed
-                        slideDirection = .forward
-                        handleContinue()
-                    }
-                }
-        )
         .onAppear {
             subscribeToKeyboardNotifications()
         }
@@ -221,6 +38,191 @@ struct GoalEntryFlowView: View {
             unsubscribeFromKeyboardNotifications()
         }
         .ignoresSafeArea(.keyboard)
+    }
+    
+    private var progressDotsView: some View {
+        HStack(spacing: 12) {
+            ForEach(0..<3) { index in
+                ProgressDot(
+                    isActive: index == currentPage,
+                    isCompleted: index < currentPage,
+                    index: index
+                )
+            }
+        }
+        .padding(.top, 40)
+    }
+    
+    private var headerView: some View {
+        Group {
+            if currentPage == 0 {
+                VStack(spacing: 0) {
+                    Text("MY BIGGEST")
+                        .font(.custom("Thunder-BoldLC", size: 54))
+                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                        .multilineTextAlignment(.center)
+                    Text("GOAL IS TO")
+                        .font(.custom("Thunder-BoldLC", size: 54))
+                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                        .multilineTextAlignment(.center)
+                }
+            } else if currentPage == 1 {
+                Text("AND I NEED TO\nWORK ON IT")
+                    .font(.custom("Thunder-BoldLC", size: 54))
+                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                    .multilineTextAlignment(.center)
+            } else {
+                Text("AT")
+                    .font(.custom("Thunder-BoldLC", size: 54))
+                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .padding(.top, 66)
+        .padding(.bottom, 32)
+    }
+    
+    private var stepContentView: some View {
+        GeometryReader { geo in
+            HStack(spacing: 0) {
+                step1View(width: geo.size.width, height: geo.size.height)
+                step2View(width: geo.size.width, height: geo.size.height)
+                step3View(width: geo.size.width, height: geo.size.height)
+            }
+            .frame(width: geo.size.width * 3, alignment: .leading)
+            .offset(x: -CGFloat(currentPage) * geo.size.width)
+            .animation(.easeInOut(duration: 0.4), value: currentPage)
+            .gesture(
+                DragGesture()
+                    .onEnded { value in
+                        if value.translation.width > 100 && currentPage > 0 {
+                            slideDirection = .backward
+                            handleBack()
+                        } else if value.translation.width < -100 && currentPage < 2 && canContinue {
+                            slideDirection = .forward
+                            handleContinue()
+                        }
+                    }
+            )
+        }
+    }
+    
+    private func step1View(width: CGFloat, height: CGFloat) -> some View {
+        ZStack {
+            // Header height (fiksno)
+            let headerHeight: CGFloat = 40 + 66 + 32 + 54 * 2
+            let buttonHeight: CGFloat = 62
+            let buttonBottomPadding: CGFloat = 24
+            // Gde je vrh dugmeta
+            let buttonTop: CGFloat = keyboardHeight > 0
+                ? height - keyboardHeight - buttonBottomPadding - buttonHeight
+                : height - buttonBottomPadding - buttonHeight
+            // Ako tastatura NIJE podignuta, input je na istoj visini kao na drugom koraku
+            let centerY: CGFloat = keyboardHeight > 0
+                ? (headerHeight + buttonTop) / 2 - 140 + 30 // spusti za 30px kada je tastatura gore
+                : (headerHeight + buttonTop) / 2 - 120
+            VStack(spacing: 0) {
+                AnimatedTypewriterTextField(goalText: $goalText, isFocused: $isTextFieldFocused)
+                Text("Enter your goal")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
+                    .padding(.top, 14)
+            }
+            .frame(width: width)
+            .position(x: width / 2, y: centerY)
+            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isTextFieldFocused = false
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    handleContinue()
+                }
+            }) {
+                Text("Continue")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
+                    .frame(width: 200, height: 62)
+                    .background(canContinue ? Color.black : Color.black.opacity(0.05))
+                    .cornerRadius(100)
+            }
+            .disabled(!canContinue)
+            .frame(maxHeight: .infinity, alignment: .bottom)
+            .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 24)
+            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
+        }
+        .frame(width: width)
+    }
+    
+    private func step2View(width: CGFloat, height: CGFloat) -> some View {
+        ZStack {
+            VStack(spacing: 0) {
+                HStack(spacing: 2) {
+                    ForEach(0..<7) { dayIndex in
+                        DaySelectionButton(
+                            day: dayNames[dayIndex],
+                            isSelected: selectedDays.contains(dayIndex),
+                            action: {
+                                if selectedDays.contains(dayIndex) {
+                                    selectedDays.remove(dayIndex)
+                                } else {
+                                    selectedDays.insert(dayIndex)
+                                }
+                            }
+                        )
+                    }
+                }
+                .padding(.horizontal, 46)
+                Text("Select frequency")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
+                    .padding(.top, 14)
+            }
+            .offset(y: -70)
+            Button(action: handleContinue) {
+                Text("Continue")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
+                    .frame(width: 200, height: 62)
+                    .background(canContinue ? Color.black : Color.black.opacity(0.05))
+                    .cornerRadius(100)
+            }
+            .disabled(!canContinue)
+            .frame(maxHeight: .infinity, alignment: .bottom)
+            .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 24)
+            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
+        }
+        .frame(width: width)
+    }
+    
+    private func step3View(width: CGFloat, height: CGFloat) -> some View {
+        ZStack {
+            VStack(spacing: 0) {
+                ReminderInputView(
+                    reminderEnabled: $reminderEnabled,
+                    reminderTime: $reminderTime
+                )
+                Text("Set Reminder")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 14)
+            }
+            .offset(y: -70)
+            Button(action: handleContinue) {
+                Text("Continue")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
+                    .frame(width: 200, height: 62)
+                    .background(canContinue ? Color.black : Color.black.opacity(0.05))
+                    .cornerRadius(100)
+            }
+            .disabled(!canContinue)
+            .frame(maxHeight: .infinity, alignment: .bottom)
+            .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 24)
+            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
+        }
+        .frame(width: width)
     }
     
     private var canContinue: Bool {
@@ -307,7 +309,12 @@ struct GoalEntryFlowView: View {
     private func subscribeToKeyboardNotifications() {
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notif in
             if let frame = notif.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                keyboardHeight = frame.height - (UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0)
+                let keyWindow = UIApplication.shared.connectedScenes
+                    .compactMap { $0 as? UIWindowScene }
+                    .flatMap { $0.windows }
+                    .first { $0.isKeyWindow }
+                let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
+                keyboardHeight = frame.height - bottomInset
             }
         }
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
@@ -456,7 +463,8 @@ struct ReminderPage: View {
 
 struct AnimatedTypewriterTextField: View {
     @Binding var goalText: String
-    @FocusState private var isFocused: Bool
+    @FocusState private var isFocusedInternal: Bool
+    var isFocused: FocusState<Bool>.Binding? = nil
     @State private var isEditing = false
     @State private var placeholderIndex = 0
     @State private var displayedPlaceholder = ""
@@ -485,7 +493,7 @@ struct AnimatedTypewriterTextField: View {
             TextField("", text: $goalText, onEditingChanged: { editing in
                 isEditing = editing
             })
-            .focused($isFocused)
+            .focused(isFocused ?? $isFocusedInternal)
             .textFieldStyle(PlainTextFieldStyle())
             .frame(width: width, height: height)
             .font(placeholderFont)
@@ -508,14 +516,14 @@ struct AnimatedTypewriterTextField: View {
         .frame(width: width, height: height)
         .contentShape(Rectangle())
         .onTapGesture {
-            isFocused = true
+            (isFocused ?? $isFocusedInternal).wrappedValue = true
         }
         .onAppear {
             startTypewriter()
         }
         .onChange(of: goalText) { newValue in
             if !newValue.isEmpty {
-                isFocused = true
+                (isFocused ?? $isFocusedInternal).wrappedValue = true
             }
         }
     }
