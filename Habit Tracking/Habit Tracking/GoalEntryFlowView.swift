@@ -90,15 +90,16 @@ struct GoalEntryFlowView: View {
                 step3View(width: geo.size.width, height: geo.size.height)
             }
             .frame(width: geo.size.width * 3, alignment: .leading)
+            .contentShape(Rectangle())
             .offset(x: -CGFloat(currentPage) * geo.size.width)
             .animation(.easeInOut(duration: 0.4), value: currentPage)
             .gesture(
                 DragGesture()
                     .onEnded { value in
-                        if value.translation.width > 100 && currentPage > 0 {
+                        if value.translation.width > 40 && currentPage > 0 {
                             slideDirection = .backward
                             handleBack()
-                        } else if value.translation.width < -100 && currentPage < 2 && canContinue {
+                        } else if value.translation.width < -40 && currentPage < 2 && canContinue {
                             slideDirection = .forward
                             handleContinue()
                         }
@@ -202,6 +203,7 @@ struct GoalEntryFlowView: View {
                     reminderEnabled: $reminderEnabled,
                     reminderTime: $reminderTime
                 )
+                .offset(y: 20)
                 Text("Set Reminder")
                     .font(.system(size: 14, weight: .regular))
                     .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
@@ -404,19 +406,23 @@ struct DayButton: View {
     var body: some View {
         Button(action: action) {
             Text(day)
-                .font(DesignConstants.bodyFont)
-                .fontWeight(.semibold)
-                .foregroundColor(isSelected ? .white : DesignConstants.primaryColor)
-                .frame(width: 40, height: 40)
-                .background(isSelected ? DesignConstants.primaryColor : Color.white)
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignConstants.smallCornerRadius)
-                        .stroke(DesignConstants.primaryColor, lineWidth: 2)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(isSelected ? .white : Color(red: 0.56, green: 0.56, blue: 0.56))
+                .frame(width: 48, height: 48)
+                .background(
+                    isSelected ? Color.black : Color(red: 0.9, green: 0.9, blue: 0.9)
                 )
-                .cornerRadius(DesignConstants.smallCornerRadius)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 106)
+                        .stroke(
+                            isSelected ? Color.clear : Color(red: 0.79, green: 0.79, blue: 0.79),
+                            lineWidth: 1
+                        )
+                )
+                .cornerRadius(106)
         }
-        .scaleEffect(isSelected ? 1.1 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
+        .scaleEffect(isSelected ? 1.0 : 1.0)
+        .animation(.easeInOut(duration: 0.2), value: isSelected)
     }
 }
 
