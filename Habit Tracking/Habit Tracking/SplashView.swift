@@ -2,6 +2,8 @@ import SwiftUI
 
 struct SplashView: View {
     @StateObject private var appState = AppStateManager.shared
+    @State private var waveOffset: CGFloat = 0
+    @State private var buttonsOffset: CGFloat = 0
 
     var body: some View {
         ZStack {
@@ -34,11 +36,12 @@ struct SplashView: View {
             }
             .allowsHitTesting(false)
 
-            // SVG Union (crni talas na dnu)
+            // SVG Union (crni talas na dnu) - puna širina
             VStack {
                 Spacer()
                 SplashBottomWave()
-                    .frame(width: 440, height: 152)
+                    .frame(width: UIScreen.main.bounds.width, height: 152)
+                    .offset(y: waveOffset)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -70,7 +73,7 @@ struct SplashView: View {
                 Spacer()
                 HStack(spacing: 8) {
                 Button(action: {
-                    appState.navigateTo(.signUp)
+                    animateWaveAndNavigate(to: .signUp)
                 }) {
                     Text("Sign Up")
                             .font(.custom("Inter_28pt-Bold", size: 16))
@@ -82,7 +85,7 @@ struct SplashView: View {
                         .tracking(-0.64)
                 }
                 Button(action: {
-                    appState.navigateTo(.goalEntry)
+                    animateWaveAndNavigate(to: .goalEntry)
                 }) {
                     Text("Set your Goal")
                             .font(.custom("Inter_28pt-Bold", size: 16))
@@ -96,29 +99,45 @@ struct SplashView: View {
             }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 45)
+                .offset(y: buttonsOffset)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(width: 440, height: 956)
     }
+    
+    private func animateWaveAndNavigate(to screen: AppScreen) {
+        withAnimation(.easeInOut(duration: 0.6)) {
+            waveOffset = 200 // Spusti talas dole
+            buttonsOffset = 200 // Spusti dugmad dole
+        }
+        
+        // Navigiraj nakon animacije
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            appState.navigateTo(screen)
+        }
+    }
 }
 
-// SVG Union (crni talas na dnu)
+// SVG Union (crni talas na dnu) - prilagođen za punu širinu
 struct SplashBottomWave: View {
     var body: some View {
         GeometryReader { geo in
             Path { path in
-                // SVG: M0 0C0 22.0914 17.9086 40 40 40H400C422.091 40 440 22.0914 440 0V152H0V0Z
+                let width = geo.size.width
+                let height = geo.size.height
+                
+                // Prilagođen SVG path za punu širinu
                 path.move(to: CGPoint(x: 0, y: 0))
-                path.addCurve(to: CGPoint(x: 40, y: 40),
-                              control1: CGPoint(x: 0, y: 22.0914),
-                              control2: CGPoint(x: 17.9086, y: 40))
-                path.addLine(to: CGPoint(x: 400, y: 40))
-                path.addCurve(to: CGPoint(x: 440, y: 0),
-                              control1: CGPoint(x: 422.091, y: 40),
-                              control2: CGPoint(x: 440, y: 22.0914))
-                path.addLine(to: CGPoint(x: 440, y: 152))
-                path.addLine(to: CGPoint(x: 0, y: 152))
+                path.addCurve(to: CGPoint(x: width * 0.091, y: height * 0.263),
+                              control1: CGPoint(x: 0, y: height * 0.145),
+                              control2: CGPoint(x: width * 0.041, y: height * 0.263))
+                path.addLine(to: CGPoint(x: width * 0.909, y: height * 0.263))
+                path.addCurve(to: CGPoint(x: width, y: 0),
+                              control1: CGPoint(x: width * 0.959, y: height * 0.263),
+                              control2: CGPoint(x: width, y: height * 0.145))
+                path.addLine(to: CGPoint(x: width, y: height))
+                path.addLine(to: CGPoint(x: 0, y: height))
                 path.closeSubpath()
             }
             .fill(Color.black)

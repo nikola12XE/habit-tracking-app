@@ -29,6 +29,23 @@ struct GoalEntryFlowView: View {
                 progressDotsView
                 headerView
                 stepContentView
+                Spacer() // Da popuni prostor
+            }
+            
+            // Continue dugme na dnu
+            VStack {
+                Spacer()
+                Button(action: handleContinue) {
+                    Text("Continue")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
+                        .frame(width: 200, height: 62)
+                        .background(canContinue ? Color.black : Color.black.opacity(0.05))
+                        .cornerRadius(100)
+                }
+                .disabled(!canContinue)
+                .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 24)
+                .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
             }
         }
         .onAppear {
@@ -120,8 +137,8 @@ struct GoalEntryFlowView: View {
                 : height - buttonBottomPadding - buttonHeight
             // Ako tastatura NIJE podignuta, input je na istoj visini kao na drugom koraku
             let centerY: CGFloat = keyboardHeight > 0
-                ? (headerHeight + buttonTop) / 2 - 140 + 30 // spusti za 30px kada je tastatura gore
-                : (headerHeight + buttonTop) / 2 - 120
+                ? (headerHeight + buttonTop) / 2 - 140 + 30 - 20 - 10 // dodatno podigni za 10px
+                : (headerHeight + buttonTop) / 2 - 120 - 20 - 10
             VStack(spacing: 0) {
                 AnimatedTypewriterTextField(goalText: $goalText, isFocused: $isTextFieldFocused)
                 Text("Enter your goal")
@@ -131,25 +148,6 @@ struct GoalEntryFlowView: View {
             }
             .frame(width: width)
             .position(x: width / 2, y: centerY)
-            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    isTextFieldFocused = false
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    handleContinue()
-                }
-            }) {
-                Text("Continue")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
-                    .frame(width: 200, height: 62)
-                    .background(canContinue ? Color.black : Color.black.opacity(0.05))
-                    .cornerRadius(100)
-            }
-            .disabled(!canContinue)
-            .frame(maxHeight: .infinity, alignment: .bottom)
-            .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 24)
             .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
         }
         .frame(width: width)
@@ -174,54 +172,39 @@ struct GoalEntryFlowView: View {
                     }
                 }
                 .padding(.horizontal, 46)
+                .offset(y: -70)
                 Text("Select frequency")
                     .font(.system(size: 14, weight: .regular))
                     .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
                     .padding(.top, 14)
+                    .offset(y: -70)
             }
-            .offset(y: -70)
-            Button(action: handleContinue) {
-                Text("Continue")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
-                    .frame(width: 200, height: 62)
-                    .background(canContinue ? Color.black : Color.black.opacity(0.05))
-                    .cornerRadius(100)
-            }
-            .disabled(!canContinue)
-            .frame(maxHeight: .infinity, alignment: .bottom)
-            .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 24)
-            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
         }
         .frame(width: width)
     }
     
     private func step3View(width: CGFloat, height: CGFloat) -> some View {
         ZStack {
+            // Header height (fiksno)
+            let headerHeight: CGFloat = 40 + 66 + 32 + 54 * 2
+            let buttonHeight: CGFloat = 62
+            let buttonBottomPadding: CGFloat = 24
+            // Gde je vrh dugmeta
+            let buttonTop: CGFloat = keyboardHeight > 0
+                ? height - keyboardHeight - buttonBottomPadding - buttonHeight
+                : height - buttonBottomPadding - buttonHeight
+            // Ista pozicija kao prvi korak
+            let centerY: CGFloat = keyboardHeight > 0
+                ? (headerHeight + buttonTop) / 2 - 140 + 30 - 20 - 10
+                : (headerHeight + buttonTop) / 2 - 120 - 20 - 10
             VStack(spacing: 0) {
                 ReminderInputView(
                     reminderEnabled: $reminderEnabled,
                     reminderTime: $reminderTime
                 )
-                .offset(y: 20)
-                Text("Set Reminder")
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 14)
             }
-            .offset(y: -70)
-            Button(action: handleContinue) {
-                Text("Continue")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
-                    .frame(width: 200, height: 62)
-                    .background(canContinue ? Color.black : Color.black.opacity(0.05))
-                    .cornerRadius(100)
-            }
-            .disabled(!canContinue)
-            .frame(maxHeight: .infinity, alignment: .bottom)
-            .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 24)
+            .frame(width: width)
+            .position(x: width / 2, y: centerY)
             .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
         }
         .frame(width: width)
@@ -260,6 +243,11 @@ struct GoalEntryFlowView: View {
     
     private func handleContinue() {
         if currentPage < 2 && canContinue {
+            // Skloni tastaturu ako je na prvom koraku
+            if currentPage == 0 {
+                isTextFieldFocused = false
+            }
+            
             slideDirection = .forward
             withAnimation(.easeInOut(duration: 0.4)) {
                 currentPage += 1
@@ -760,7 +748,7 @@ struct CustomSwitch: View {
         Button(action: { isOn.toggle() }) {
             ZStack(alignment: isOn ? .trailing : .leading) {
                 RoundedRectangle(cornerRadius: 40)
-                    .fill(isOn ? Color(red: 0.308, green: 0.608, blue: 1) : Color(red: 0.828, green: 0.828, blue: 0.828))
+                    .fill(isOn ? Color.black : Color(red: 0.828, green: 0.828, blue: 0.828))
                     .frame(width: 74, height: 40)
                 RoundedRectangle(cornerRadius: 40)
                     .fill(Color.white)
