@@ -476,50 +476,63 @@ struct AnimatedTypewriterTextField: View {
     let pauseDuration = 1.2
 
     var body: some View {
-        ZStack(alignment: .center) {
-            RoundedRectangle(cornerRadius: 38)
-                .fill(Color(red: 0.894, green: 0.894, blue: 0.894))
-                .frame(width: width, height: height)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 38)
-                        .stroke(Color(red: 0.46, green: 0.46, blue: 0.46).opacity(0.28), lineWidth: 1)
-                )
-            TextField("", text: $goalText, onEditingChanged: { editing in
-                isEditing = editing
-            })
-            .focused(isFocused ?? $isFocusedInternal)
-            .textFieldStyle(PlainTextFieldStyle())
-            .frame(width: width, height: height)
-            .font(placeholderFont)
-            .tracking(-0.16)
-            .foregroundColor(.black)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 24)
-            .keyboardType(.default)
-            .submitLabel(.done)
-            if goalText.isEmpty && !isEditing {
-                Text(displayedPlaceholder)
-                    .font(placeholderFont)
-                    .tracking(-0.16)
-                    .foregroundColor(Color.gray.opacity(0.6))
-                    .frame(width: width, height: height)
-                    .multilineTextAlignment(.center)
-                    .allowsHitTesting(false)
+        GeometryReader { geo in
+            let maxWidth = geo.size.width - 36
+            let textWidth = textWidthFor(goalText)
+            let dynamicWidth = min(max(width, textWidth + 32), maxWidth)
+            ZStack(alignment: .center) {
+                RoundedRectangle(cornerRadius: 38)
+                    .fill(Color(red: 0.894, green: 0.894, blue: 0.894))
+                    .frame(width: dynamicWidth, height: height)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 38)
+                            .stroke(Color(red: 0.46, green: 0.46, blue: 0.46).opacity(0.28), lineWidth: 1)
+                    )
+                TextField("", text: $goalText, onEditingChanged: { editing in
+                    isEditing = editing
+                })
+                .focused(isFocused ?? $isFocusedInternal)
+                .textFieldStyle(PlainTextFieldStyle())
+                .frame(width: dynamicWidth, height: height)
+                .font(placeholderFont)
+                .tracking(-0.16)
+                .foregroundColor(.black)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 18)
+                .keyboardType(.default)
+                .submitLabel(.done)
+                if goalText.isEmpty && !isEditing {
+                    Text(displayedPlaceholder)
+                        .font(placeholderFont)
+                        .tracking(-0.16)
+                        .foregroundColor(Color.gray.opacity(0.6))
+                        .frame(width: dynamicWidth, height: height)
+                        .multilineTextAlignment(.center)
+                        .allowsHitTesting(false)
+                }
             }
-        }
-        .frame(width: width, height: height)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            (isFocused ?? $isFocusedInternal).wrappedValue = true
-        }
-        .onAppear {
-            startTypewriter()
-        }
-        .onChange(of: goalText) { newValue in
-            if !newValue.isEmpty {
+            .frame(width: geo.size.width, height: height)
+            .contentShape(Rectangle())
+            .onTapGesture {
                 (isFocused ?? $isFocusedInternal).wrappedValue = true
             }
+            .onAppear {
+                startTypewriter()
+            }
+            .onChange(of: goalText) { newValue in
+                if !newValue.isEmpty {
+                    (isFocused ?? $isFocusedInternal).wrappedValue = true
+                }
+            }
         }
+        .frame(height: height)
+    }
+
+    private func textWidthFor(_ text: String) -> CGFloat {
+        let font = UIFont(name: "Inter_24pt-SemiBold", size: 16) ?? UIFont.systemFont(ofSize: 16)
+        let attributes = [NSAttributedString.Key.font: font]
+        let size = (text as NSString).size(withAttributes: attributes)
+        return size.width
     }
 
     private func startTypewriter() {
@@ -759,16 +772,6 @@ struct CustomSwitch: View {
             .animation(.easeInOut(duration: 0.18), value: isOn)
         }
         .buttonStyle(PlainButtonStyle())
-    }
-}
-
-// Custom shape for rounded corners
-struct RoundedCorner: Shape {
-    var radius: CGFloat = 40.0
-    var corners: UIRectCorner = .allCorners
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
-        return Path(path.cgPath)
     }
 }
 

@@ -3,7 +3,7 @@ import SwiftUI
 struct MainTrackingView: View {
     @StateObject private var appState = AppStateManager.shared
     @StateObject private var coreDataManager = CoreDataManager.shared
-    @State private var currentGoal: Goal?
+    @State private var currentGoal: Goal? = nil
     @State private var progressDays: [ProgressDay] = []
     @State private var currentMonth = Date()
     @State private var showProfile = false
@@ -14,162 +14,135 @@ struct MainTrackingView: View {
     @State private var showNoGoalAlert = false
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                DesignConstants.backgroundColor
-                    .ignoresSafeArea()
-                
-                VStack(spacing: DesignConstants.largeSpacing) {
-                    // Header
-                    headerView
-                    
-                    // Monthly grid
-                    monthlyGridView
-                    
-                    Spacer()
-                    
-                    // Add Milestone button
-                    if showAddMilestoneButton {
-                        addMilestoneButton
+        ZStack {
+            Color.black.ignoresSafeArea()
+            VStack(spacing: 0) {
+                Spacer().frame(height: 140)
+                // HEADER
+                ZStack(alignment: .top) {
+                    Color.black
+                        .frame(height: 260)
+                        .clipShape(RoundedCorner(radius: 40, corners: [.bottomLeft, .bottomRight]))
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Your Progress on")
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundColor(.white.opacity(0.7))
+                            .padding(.top, 140)
+                            .padding(.leading, 36)
+                        HStack(alignment: .bottom, spacing: 16) {
+                            Text(currentGoal?.goalText?.uppercased() ?? "GROW PORTFOLIO")
+                                .font(Font.custom("Thunder-BoldLC", size: 75))
+                                .foregroundColor(.white)
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .alignmentGuide(.top) { d in d[.top] }
+                            Spacer()
+                            Button(action: { showProfile = true }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
+                                        .frame(width: 48, height: 48)
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.white, lineWidth: 5)
+                                        )
+                                    Image(systemName: "person.fill")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 28, height: 28)
+                                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                                }
+                            }
+                            .padding(.trailing, 24)
+                            .padding(.bottom, 10)
+                        }
+                        .padding(.leading, 36)
+                        .padding(.trailing, 0)
+                        Spacer().frame(height: 24)
                     }
                 }
-                .padding(.horizontal, DesignConstants.largeSpacing)
-                
-                // Falling flowers overlay
-                ForEach(fallingFlowers) { flower in
-                    FallingFlowerView(flower: flower)
+                .frame(height: 260)
+                .sheet(isPresented: $showProfile) {
+                    ProfileView()
                 }
+                // KARTICA SA KALENDAROM
+                ZStack {
+                    RoundedRectangle(cornerRadius: 36, style: .continuous)
+                        .fill(Color(red: 0.93, green: 0.93, blue: 0.93))
+                        .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 4)
+                    VStack(spacing: 50) {
+                        // MAJ 2025
+                        VStack(spacing: 0) {
+                            HStack(spacing: 12) {
+                                Spacer()
+                                Text("MAY")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.black)
+                                Rectangle()
+                                    .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
+                                    .frame(width: 1, height: 16)
+                                Text("2025")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.black)
+                                Spacer()
+                            }
+                            .padding(.top, 32)
+                            .padding(.bottom, 12)
+                            CalendarGridView(days: ["06","06","07","06","07","06","06","07","06","07","06","16","17","06","07","06","23","24","06","07","06","23","31"]) // Primeri dana
+                        }
+                        Divider()
+                            .background(Color(red: 0.9, green: 0.9, blue: 0.9))
+                        // JUN 2025
+                        VStack(spacing: 0) {
+                            HStack(spacing: 12) {
+                                Spacer()
+                                Text("JUN")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.black)
+                                Rectangle()
+                                    .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
+                                    .frame(width: 1, height: 16)
+                                Text("2025")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.black)
+                                Spacer()
+                            }
+                            .padding(.top, 32)
+                            .padding(.bottom, 12)
+                            CalendarGridView(days: ["06","06","07","06","07","06","07","06","07","06","07","13","14","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06"]) // Primeri dana
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 28)
+                    .padding(.top, 0)
+                    .padding(.bottom, 24)
+                }
+                .padding(.top, 24)
+                .padding(.horizontal, 0)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .navigationBarHidden(true)
-            .onAppear {
+        }
+        .navigationBarHidden(true)
+        .onAppear {
+            loadData()
+        }
+        .onReceive(appState.$currentScreen) { screen in
+            if screen == .main {
                 loadData()
             }
-            .onReceive(appState.$currentScreen) { screen in
-                if screen == .main {
-                    loadData()
-                }
-            }
-            .sheet(isPresented: $showProfile) {
-                ProfileView()
-            }
-            .sheet(isPresented: $showMilestonePopup) {
-                if let selectedProgressDay = selectedProgressDay {
-                    MilestonePopupView(progressDay: selectedProgressDay)
-                }
-            }
-            .alert("No Goal Set", isPresented: $showNoGoalAlert) {
-                Button("Set Goal") {
-                    appState.navigateTo(.goalEntry)
-                }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("You need to set a goal first to start tracking your progress.")
+        }
+        .sheet(isPresented: $showMilestonePopup) {
+            if let selectedProgressDay = selectedProgressDay {
+                MilestonePopupView(progressDay: selectedProgressDay)
             }
         }
-    }
-    
-    private var headerView: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
-                Text("Your Progress on")
-                    .font(DesignConstants.captionFont)
-                    .foregroundColor(DesignConstants.textColor.opacity(0.7))
-                
-                if let goal = currentGoal {
-                    Text(goal.goalText ?? "Loading...")
-                        .font(DesignConstants.subtitleFont)
-                        .fontWeight(.semibold)
-                        .foregroundColor(DesignConstants.textColor)
-                        .lineLimit(2)
-                } else {
-                    Text("No goal set")
-                        .font(DesignConstants.subtitleFont)
-                        .fontWeight(.semibold)
-                        .foregroundColor(DesignConstants.textColor.opacity(0.7))
-                }
+        .alert("No Goal Set", isPresented: $showNoGoalAlert) {
+            Button("Set Goal") {
+                appState.navigateTo(.goalEntry)
             }
-            
-            Spacer()
-            
-            Button(action: { 
-                showProfile = true
-            }) {
-                Image(systemName: "person.circle.fill")
-                    .font(.system(size: 32))
-                    .foregroundColor(DesignConstants.primaryColor)
-            }
-        }
-        .padding(.top, DesignConstants.largeSpacing)
-    }
-    
-    private var monthlyGridView: some View {
-        VStack(spacing: DesignConstants.mediumSpacing) {
-            // Month navigation
-            HStack {
-                Button(action: previousMonth) {
-                    Image(systemName: "chevron.left")
-                        .font(.title2)
-                        .foregroundColor(DesignConstants.primaryColor)
-                }
-                
-                Spacer()
-                
-                VStack(spacing: DesignConstants.smallSpacing) {
-                    Text(monthYearString)
-                        .font(DesignConstants.subtitleFont)
-                        .fontWeight(.semibold)
-                        .foregroundColor(DesignConstants.textColor)
-                    
-                    // Show available days info
-                    if let goal = currentGoal, let nsNumbers = goal.selectedDays as? [NSNumber], !nsNumbers.isEmpty {
-                        let availableDays = countAvailableDaysInMonth()
-                        Text("\(availableDays) days to work on")
-                            .font(DesignConstants.captionFont)
-                            .foregroundColor(DesignConstants.textColor.opacity(0.7))
-                    }
-                }
-                
-                Spacer()
-                
-                Button(action: nextMonth) {
-                    Image(systemName: "chevron.right")
-                        .font(.title2)
-                        .foregroundColor(DesignConstants.primaryColor)
-                }
-            }
-            
-            // Progress grid (not calendar)
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: DesignConstants.smallSpacing) {
-                ForEach(Array(progressDaysForMonth.enumerated()), id: \.offset) { index, progressData in
-                    ProgressDayCellView(
-                        dayNumber: index + 1,
-                        progressDay: progressData.progressDay,
-                        date: progressData.date,
-                        onTap: { progressDay in
-                            handleDayTap(progressDay: progressDay, date: progressData.date)
-                        }
-                    )
-                }
-            }
-        }
-        .padding(DesignConstants.largeSpacing)
-        .background(Color.white)
-        .cornerRadius(DesignConstants.largeCornerRadius)
-        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
-    }
-    
-    private var addMilestoneButton: some View {
-        Button("Add Milestone") {
-            // This will be handled by the day tap
-        }
-        .buttonStyle(PrimaryButtonStyle())
-        .transition(.opacity.combined(with: .scale))
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                withAnimation(.easeOut(duration: DesignConstants.shortAnimation)) {
-                    showAddMilestoneButton = false
-                }
-            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("You need to set a goal first to start tracking your progress.")
         }
     }
     
@@ -455,6 +428,40 @@ struct FlowerView: View {
         Image(imageName)
             .resizable()
             .scaledToFit()
+    }
+}
+
+// MARK: - CalendarGridView
+struct CalendarGridView: View {
+    let days: [String] // npr. ["06", "07", ...]
+    let columns = Array(repeating: GridItem(.fixed(48), spacing: 8), count: 6)
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: 16) {
+            ForEach(days.indices, id: \.self) { idx in
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
+                        .frame(width: 48, height: 48)
+                        .overlay(
+                            Circle()
+                                .stroke(Color(red: 0.79, green: 0.79, blue: 0.79), lineWidth: 1)
+                        )
+                    Text(days[idx])
+                        .font(.system(size: 11, weight: .regular))
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                }
+            }
+        }
+    }
+}
+
+// MARK: - RoundedCorner helper
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
+        return Path(path.cgPath)
     }
 }
 
