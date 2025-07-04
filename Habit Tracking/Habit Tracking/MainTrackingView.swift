@@ -12,6 +12,11 @@ struct MainTrackingView: View {
     @State private var fallingFlowers: [FallingFlower] = []
     @State private var showAddMilestoneButton = false
     @State private var showNoGoalAlert = false
+    // Animation states
+    @State private var headerOffset: CGFloat = -60
+    @State private var headerOpacity: Double = 0
+    @State private var calendarOffset: CGFloat = 60
+    @State private var calendarOpacity: Double = 0
     
     var body: some View {
         GeometryReader { geometry in
@@ -60,6 +65,10 @@ struct MainTrackingView: View {
                             Spacer().frame(height: 24)
                         }
                     }
+                    .offset(y: headerOffset)
+                    .opacity(headerOpacity)
+                    .animation(.easeOut(duration: 0.55), value: headerOffset)
+                    .animation(.easeOut(duration: 0.55), value: headerOpacity)
                     .sheet(isPresented: $showProfile) {
                         ProfileView()
                     }
@@ -116,12 +125,29 @@ struct MainTrackingView: View {
                     }
                     .padding(.horizontal, 0)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .offset(y: calendarOffset)
+                    .opacity(calendarOpacity)
+                    .animation(.easeOut(duration: 0.55), value: calendarOffset)
+                    .animation(.easeOut(duration: 0.55), value: calendarOpacity)
                 }
             }
         }
         .navigationBarHidden(true)
         .onAppear {
             loadData()
+            // Entrance animation
+            headerOffset = -60
+            headerOpacity = 0
+            calendarOffset = 60
+            calendarOpacity = 0
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.easeOut(duration: 0.55)) {
+                    headerOffset = 0
+                    headerOpacity = 1
+                    calendarOffset = 0
+                    calendarOpacity = 1
+                }
+            }
         }
         .onReceive(appState.$currentScreen) { screen in
             if screen == .main {
