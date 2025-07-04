@@ -52,20 +52,23 @@ struct AppStateView: View {
     @StateObject private var coreDataManager = CoreDataManager.shared
     
     var body: some View {
-        Group {
-            switch appState.currentScreen {
-            case .splash:
-                SplashView()
-            case .signUp:
-                SignUpView()
-            case .login:
-                LoginView()
-            case .goalEntry:
-                GoalEntryFlowView()
-            case .main:
-                MainTrackingView()
+        ZStack {
+            Color(red: 0.93, green: 0.93, blue: 0.93).ignoresSafeArea()
+            Group {
+                switch appState.currentScreen {
+                case .splash:
+                    SplashView()
+                case .signUp:
+                    SignUpView()
+                case .login:
+                    LoginView()
+                case .goalEntry:
+                    GoalEntryFlowView()
+                case .main:
+                    MainTrackingView()
+                }
             }
+            .environment(\.managedObjectContext, coreDataManager.container.viewContext)
         }
-        .environment(\.managedObjectContext, coreDataManager.container.viewContext)
     }
 } 

@@ -6,13 +6,11 @@ struct SplashView: View {
     @State private var buttonsOffset: CGFloat = 0
     @State private var blueFlowerOffset: CGSize = .zero
     @State private var redFlowerOffset: CGSize = .zero
+    @State private var headerOffset: CGFloat = 0
+    @State private var isExiting: Bool = false
 
     var body: some View {
         ZStack {
-            // Pozadina
-            Color(red: 0.93, green: 0.93, blue: 0.93) // #ededed
-                .ignoresSafeArea()
-
             // PNG cvetovi (iza SVG-a)
             GeometryReader { geo in
                 // Plavi cvet - 30% vidljiv desno, horizontalni flip
@@ -71,6 +69,8 @@ struct SplashView: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .offset(y: isExiting ? -300 : 0)
+            .animation(.easeInOut(duration: 0.6), value: isExiting)
 
             // Dugmad (uvek na vrhu)
             VStack {
@@ -112,14 +112,13 @@ struct SplashView: View {
     
     private func animateWaveAndNavigate(to screen: AppScreen) {
         withAnimation(.easeInOut(duration: 0.6)) {
-            waveOffset = 200 // Spusti talas dole
-            buttonsOffset = 200 // Spusti dugmad dole
-            blueFlowerOffset = CGSize(width: 200, height: 300) // Plavi cvet ide desno i dole
-            redFlowerOffset = CGSize(width: -200, height: 300) // Crveni cvet ide levo i dole
+            isExiting = true
+            waveOffset = 200
+            buttonsOffset = 200
+            blueFlowerOffset = CGSize(width: 200, height: 300)
+            redFlowerOffset = CGSize(width: -200, height: 300)
         }
-        
-        // Navigiraj nakon animacije
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             appState.navigateTo(screen)
         }
     }

@@ -24,7 +24,6 @@ struct GoalEntryFlowView: View {
     
     var body: some View {
         ZStack {
-            Color(red: 0.93, green: 0.93, blue: 0.93).ignoresSafeArea()
             VStack(spacing: 0) {
                 progressDotsView
                 headerView

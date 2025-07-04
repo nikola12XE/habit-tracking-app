@@ -14,112 +14,109 @@ struct MainTrackingView: View {
     @State private var showNoGoalAlert = false
     
     var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            VStack(spacing: 0) {
-                Spacer().frame(height: 140)
-                // HEADER
-                ZStack(alignment: .top) {
-                    Color.black
-                        .frame(height: 260)
-                        .clipShape(RoundedCorner(radius: 40, corners: [.bottomLeft, .bottomRight]))
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("Your Progress on")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundColor(.white.opacity(0.7))
-                            .padding(.top, 140)
-                            .padding(.leading, 36)
-                        HStack(alignment: .bottom, spacing: 16) {
-                            Text(currentGoal?.goalText?.uppercased() ?? "GROW PORTFOLIO")
-                                .font(Font.custom("Thunder-BoldLC", size: 75))
-                                .foregroundColor(.white)
-                                .lineLimit(2)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .alignmentGuide(.top) { d in d[.top] }
-                            Spacer()
-                            Button(action: { showProfile = true }) {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
-                                        .frame(width: 48, height: 48)
-                                        .overlay(
-                                            Circle()
-                                                .stroke(Color.white, lineWidth: 5)
-                                        )
-                                    Image(systemName: "person.fill")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 28, height: 28)
-                                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+        GeometryReader { geometry in
+            ZStack {
+                Color.black.ignoresSafeArea()
+                VStack(spacing: 0) {
+                    // HEADER
+                    ZStack(alignment: .top) {
+                        Color.black
+                            .clipShape(RoundedCorner(radius: 40, corners: [.bottomLeft, .bottomRight]))
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("Your Progress on")
+                                .font(.system(size: 16, weight: .regular))
+                                .foregroundColor(.white.opacity(0.7))
+                                .padding(.top, 100 - geometry.safeAreaInsets.top)
+                                .padding(.leading, 36)
+                            HStack(alignment: .bottom, spacing: 16) {
+                                Text(currentGoal?.goalText?.uppercased() ?? "GROW PORTFOLIO")
+                                    .font(Font.custom("Thunder-BoldLC", size: 75))
+                                    .foregroundColor(.white)
+                                    .lineLimit(2)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .alignmentGuide(.top) { d in d[.top] }
+                                Spacer()
+                                Button(action: { showProfile = true }) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
+                                            .frame(width: 48, height: 48)
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(Color.white, lineWidth: 5)
+                                            )
+                                        Image(systemName: "person.fill")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 28, height: 28)
+                                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                                    }
                                 }
+                                .padding(.trailing, 24)
+                                .padding(.bottom, 10)
                             }
-                            .padding(.trailing, 24)
-                            .padding(.bottom, 10)
+                            .padding(.leading, 36)
+                            .padding(.trailing, 0)
+                            Spacer().frame(height: 24)
                         }
-                        .padding(.leading, 36)
-                        .padding(.trailing, 0)
-                        Spacer().frame(height: 24)
                     }
-                }
-                .frame(height: 260)
-                .sheet(isPresented: $showProfile) {
-                    ProfileView()
-                }
-                // KARTICA SA KALENDAROM
-                ZStack {
-                    RoundedRectangle(cornerRadius: 36, style: .continuous)
-                        .fill(Color(red: 0.93, green: 0.93, blue: 0.93))
-                        .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 4)
-                    VStack(spacing: 50) {
-                        // MAJ 2025
-                        VStack(spacing: 0) {
-                            HStack(spacing: 12) {
-                                Spacer()
-                                Text("MAY")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.black)
-                                Rectangle()
-                                    .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
-                                    .frame(width: 1, height: 16)
-                                Text("2025")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.black)
-                                Spacer()
-                            }
-                            .padding(.top, 32)
-                            .padding(.bottom, 12)
-                            CalendarGridView(days: ["06","06","07","06","07","06","06","07","06","07","06","16","17","06","07","06","23","24","06","07","06","23","31"]) // Primeri dana
-                        }
-                        Divider()
-                            .background(Color(red: 0.9, green: 0.9, blue: 0.9))
-                        // JUN 2025
-                        VStack(spacing: 0) {
-                            HStack(spacing: 12) {
-                                Spacer()
-                                Text("JUN")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.black)
-                                Rectangle()
-                                    .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
-                                    .frame(width: 1, height: 16)
-                                Text("2025")
-                                    .font(.system(size: 16, weight: .bold))
-                                    .foregroundColor(.black)
-                                Spacer()
-                            }
-                            .padding(.top, 32)
-                            .padding(.bottom, 12)
-                            CalendarGridView(days: ["06","06","07","06","07","06","07","06","07","06","07","13","14","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06"]) // Primeri dana
-                        }
-                        Spacer(minLength: 0)
+                    .sheet(isPresented: $showProfile) {
+                        ProfileView()
                     }
-                    .padding(.horizontal, 28)
-                    .padding(.top, 0)
-                    .padding(.bottom, 24)
+                    // KARTICA SA KALENDAROM
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 36, style: .continuous)
+                            .fill(Color(red: 0.93, green: 0.93, blue: 0.93))
+                            .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 4)
+                        VStack(spacing: 50) {
+                            // MAJ 2025
+                            VStack(spacing: 0) {
+                                HStack(spacing: 12) {
+                                    Spacer()
+                                    Text("MAY")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.black)
+                                    Rectangle()
+                                        .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
+                                        .frame(width: 1, height: 16)
+                                    Text("2025")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.black)
+                                    Spacer()
+                                }
+                                .padding(.top, 32)
+                                .padding(.bottom, 12)
+                                CalendarGridView(days: ["06","06","07","06","07","06","06","07","06","07","06","16","17","06","07","06","23","24","06","07","06","23","31"]) // Primeri dana
+                            }
+                            Divider()
+                                .background(Color(red: 0.9, green: 0.9, blue: 0.9))
+                            // JUN 2025
+                            VStack(spacing: 0) {
+                                HStack(spacing: 12) {
+                                    Spacer()
+                                    Text("JUN")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.black)
+                                    Rectangle()
+                                        .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
+                                        .frame(width: 1, height: 16)
+                                    Text("2025")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.black)
+                                    Spacer()
+                                }
+                                .padding(.top, 32)
+                                .padding(.bottom, 12)
+                                CalendarGridView(days: ["06","06","07","06","07","06","07","06","07","06","07","13","14","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06"]) // Primeri dana
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, 28)
+                        .padding(.bottom, 24)
+                    }
+                    .padding(.horizontal, 0)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .padding(.top, 24)
-                .padding(.horizontal, 0)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .navigationBarHidden(true)
