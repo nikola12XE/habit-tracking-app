@@ -88,10 +88,15 @@ struct GoalEntryFlowView: View {
                     .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
                     .multilineTextAlignment(.center)
             } else {
-                Text("AT")
-                    .font(.custom("Thunder-BoldLC", size: 54))
-                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
-                    .multilineTextAlignment(.center)
+                VStack(spacing: 0) {
+                    Text("AT")
+                        .font(.custom("Thunder-BoldLC", size: 54))
+                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                        .multilineTextAlignment(.center)
+                    Text(" ") // prazna linija za poravnanje
+                        .font(.custom("Thunder-BoldLC", size: 54))
+                        .foregroundColor(.clear)
+                }
             }
         }
         .padding(.top, 66)
@@ -154,6 +159,18 @@ struct GoalEntryFlowView: View {
     
     private func step2View(width: CGFloat, height: CGFloat) -> some View {
         ZStack {
+            // Header height (fiksno)
+            let headerHeight: CGFloat = 40 + 66 + 32 + 54 * 2
+            let buttonHeight: CGFloat = 62
+            let buttonBottomPadding: CGFloat = 24
+            // Gde je vrh dugmeta
+            let buttonTop: CGFloat = keyboardHeight > 0
+                ? height - keyboardHeight - buttonBottomPadding - buttonHeight
+                : height - buttonBottomPadding - buttonHeight
+            // Ista pozicija kao prvi korak
+            let centerY: CGFloat = keyboardHeight > 0
+                ? (headerHeight + buttonTop) / 2 - 140 + 30 - 20 - 10
+                : (headerHeight + buttonTop) / 2 - 120 - 20 - 10
             VStack(spacing: 0) {
                 HStack(spacing: 2) {
                     ForEach(0..<7) { dayIndex in
@@ -171,13 +188,14 @@ struct GoalEntryFlowView: View {
                     }
                 }
                 .padding(.horizontal, 46)
-                .offset(y: -70)
                 Text("Select frequency")
                     .font(.system(size: 14, weight: .regular))
                     .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
                     .padding(.top, 14)
-                    .offset(y: -70)
             }
+            .frame(width: width)
+            .position(x: width / 2, y: centerY)
+            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
         }
         .frame(width: width)
     }
@@ -673,7 +691,7 @@ struct ReminderInputView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            Spacer()
+            // Spacer() // uklonjen da bi poravnanje bilo isto kao u ostalim koracima
             ZStack {
                 // Input tačno centriran
                 Button(action: {
@@ -713,7 +731,7 @@ struct ReminderInputView: View {
                 .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
                 .multilineTextAlignment(.center)
                 .padding(.top, 14)
-            Spacer(minLength: 0)
+            // Spacer(minLength: 0) // uklonjen da bi poravnanje bilo isto kao u ostalim koracima
         }
         .frame(maxWidth: .infinity)
         .onAppear {

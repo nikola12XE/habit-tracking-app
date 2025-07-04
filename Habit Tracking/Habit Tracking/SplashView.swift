@@ -6,7 +6,6 @@ struct SplashView: View {
     @State private var buttonsOffset: CGFloat = 0
     @State private var blueFlowerOffset: CGSize = .zero
     @State private var redFlowerOffset: CGSize = .zero
-    @State private var headerOffset: CGFloat = 0
     @State private var isExiting: Bool = false
 
     var body: some View {
@@ -70,6 +69,7 @@ struct SplashView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .offset(y: isExiting ? -300 : 0)
+            .opacity(isExiting ? 0 : 1)
             .animation(.easeInOut(duration: 0.6), value: isExiting)
 
             // Dugmad (uvek na vrhu)
