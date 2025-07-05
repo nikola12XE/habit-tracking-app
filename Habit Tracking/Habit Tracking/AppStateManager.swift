@@ -10,9 +10,7 @@ class AppStateManager: ObservableObject {
     private init() {}
     
     func navigateTo(_ screen: AppScreen) {
-        withAnimation(.easeInOut(duration: DesignConstants.mediumAnimation)) {
-            currentScreen = screen
-        }
+        currentScreen = screen
     }
     
     func completeOnboarding() {
@@ -54,21 +52,21 @@ struct AppStateView: View {
     var body: some View {
         ZStack {
             Color(red: 0.93, green: 0.93, blue: 0.93).ignoresSafeArea()
-            Group {
-                switch appState.currentScreen {
-                case .splash:
-                    SplashView()
-                case .signUp:
-                    SignUpView()
-                case .login:
-                    LoginView()
-                case .goalEntry:
-                    GoalEntryFlowView()
-                case .main:
-                    MainTrackingView()
-                }
+        Group {
+            switch appState.currentScreen {
+            case .splash:
+                SplashView()
+            case .signUp:
+                SignUpView()
+            case .login:
+                LoginView()
+            case .goalEntry:
+                GoalEntryFlowView()
+            case .main:
+                MainTrackingView()
             }
-            .environment(\.managedObjectContext, coreDataManager.container.viewContext)
+        }
+        .environment(\.managedObjectContext, coreDataManager.container.viewContext)
         }
     }
 } 

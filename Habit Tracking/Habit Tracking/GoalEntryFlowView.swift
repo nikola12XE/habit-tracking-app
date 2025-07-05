@@ -30,7 +30,6 @@ struct GoalEntryFlowView: View {
                 stepContentView
                 Spacer() // Da popuni prostor
             }
-            
             // Continue dugme na dnu
             VStack {
                 Spacer()
@@ -89,10 +88,10 @@ struct GoalEntryFlowView: View {
                     .multilineTextAlignment(.center)
             } else {
                 VStack(spacing: 0) {
-                    Text("AT")
-                        .font(.custom("Thunder-BoldLC", size: 54))
-                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
-                        .multilineTextAlignment(.center)
+                Text("AT")
+                    .font(.custom("Thunder-BoldLC", size: 54))
+                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                    .multilineTextAlignment(.center)
                     Text(" ") // prazna linija za poravnanje
                         .font(.custom("Thunder-BoldLC", size: 54))
                         .foregroundColor(.clear)
@@ -113,7 +112,7 @@ struct GoalEntryFlowView: View {
             .frame(width: geo.size.width * 3, alignment: .leading)
             .contentShape(Rectangle())
             .offset(x: -CGFloat(currentPage) * geo.size.width)
-            .animation(.easeInOut(duration: 0.4), value: currentPage)
+            .animation(.easeInOut(duration: 0.6), value: currentPage)
             .gesture(
                 DragGesture()
                     .onEnded { value in
@@ -152,7 +151,7 @@ struct GoalEntryFlowView: View {
             }
             .frame(width: width)
             .position(x: width / 2, y: centerY)
-            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
+            .animation(.easeInOut(duration: 0.6), value: keyboardHeight)
         }
         .frame(width: width)
     }
@@ -195,7 +194,7 @@ struct GoalEntryFlowView: View {
             }
             .frame(width: width)
             .position(x: width / 2, y: centerY)
-            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
+            .animation(.easeInOut(duration: 0.6), value: keyboardHeight)
         }
         .frame(width: width)
     }
@@ -264,9 +263,8 @@ struct GoalEntryFlowView: View {
             if currentPage == 0 {
                 isTextFieldFocused = false
             }
-            
             slideDirection = .forward
-            withAnimation(.easeInOut(duration: 0.4)) {
+            withAnimation(.easeInOut(duration: 0.6)) {
                 currentPage += 1
             }
         } else if currentPage == 2 {
@@ -275,13 +273,14 @@ struct GoalEntryFlowView: View {
             } else {
                 createGoal()
             }
+            appState.navigateTo(.main)
         }
     }
     
     private func handleBack() {
         if currentPage > 0 {
             slideDirection = .backward
-            withAnimation(.easeInOut(duration: 0.4)) {
+            withAnimation(.easeInOut(duration: 0.6)) {
                 currentPage -= 1
             }
         }
@@ -497,50 +496,50 @@ struct AnimatedTypewriterTextField: View {
             let maxWidth = geo.size.width - 36
             let textWidth = textWidthFor(goalText)
             let dynamicWidth = min(max(width, textWidth + 32), maxWidth)
-            ZStack(alignment: .center) {
-                RoundedRectangle(cornerRadius: 38)
-                    .fill(Color(red: 0.894, green: 0.894, blue: 0.894))
+        ZStack(alignment: .center) {
+            RoundedRectangle(cornerRadius: 38)
+                .fill(Color(red: 0.894, green: 0.894, blue: 0.894))
                     .frame(width: dynamicWidth, height: height)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 38)
-                            .stroke(Color(red: 0.46, green: 0.46, blue: 0.46).opacity(0.28), lineWidth: 1)
-                    )
-                TextField("", text: $goalText, onEditingChanged: { editing in
-                    isEditing = editing
-                })
-                .focused(isFocused ?? $isFocusedInternal)
-                .textFieldStyle(PlainTextFieldStyle())
+                .overlay(
+                    RoundedRectangle(cornerRadius: 38)
+                        .stroke(Color(red: 0.46, green: 0.46, blue: 0.46).opacity(0.28), lineWidth: 1)
+                )
+            TextField("", text: $goalText, onEditingChanged: { editing in
+                isEditing = editing
+            })
+            .focused(isFocused ?? $isFocusedInternal)
+            .textFieldStyle(PlainTextFieldStyle())
                 .frame(width: dynamicWidth, height: height)
-                .font(placeholderFont)
-                .tracking(-0.16)
-                .foregroundColor(.black)
-                .multilineTextAlignment(.center)
+            .font(placeholderFont)
+            .tracking(-0.16)
+            .foregroundColor(.black)
+            .multilineTextAlignment(.center)
                 .padding(.horizontal, 18)
-                .keyboardType(.default)
-                .submitLabel(.done)
-                if goalText.isEmpty && !isEditing {
-                    Text(displayedPlaceholder)
-                        .font(placeholderFont)
-                        .tracking(-0.16)
-                        .foregroundColor(Color.gray.opacity(0.6))
+            .keyboardType(.default)
+            .submitLabel(.done)
+            if goalText.isEmpty && !isEditing {
+                Text(displayedPlaceholder)
+                    .font(placeholderFont)
+                    .tracking(-0.16)
+                    .foregroundColor(Color.gray.opacity(0.6))
                         .frame(width: dynamicWidth, height: height)
-                        .multilineTextAlignment(.center)
-                        .allowsHitTesting(false)
-                }
+                    .multilineTextAlignment(.center)
+                    .allowsHitTesting(false)
             }
+        }
             .frame(width: geo.size.width, height: height)
-            .contentShape(Rectangle())
-            .onTapGesture {
+        .contentShape(Rectangle())
+        .onTapGesture {
+            (isFocused ?? $isFocusedInternal).wrappedValue = true
+        }
+        .onAppear {
+            startTypewriter()
+        }
+        .onChange(of: goalText) { newValue in
+            if !newValue.isEmpty {
                 (isFocused ?? $isFocusedInternal).wrappedValue = true
             }
-            .onAppear {
-                startTypewriter()
-            }
-            .onChange(of: goalText) { newValue in
-                if !newValue.isEmpty {
-                    (isFocused ?? $isFocusedInternal).wrappedValue = true
-                }
-            }
+        }
         }
         .frame(height: height)
     }

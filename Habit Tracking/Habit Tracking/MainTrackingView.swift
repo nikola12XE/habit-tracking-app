@@ -12,18 +12,14 @@ struct MainTrackingView: View {
     @State private var fallingFlowers: [FallingFlower] = []
     @State private var showAddMilestoneButton = false
     @State private var showNoGoalAlert = false
-    // Animation states
-    @State private var headerOffset: CGFloat = -60
-    @State private var headerOpacity: Double = 0
-    @State private var calendarOffset: CGFloat = 60
-    @State private var calendarOpacity: Double = 0
+    @State private var calendarOffset: CGFloat = 0
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 Color.black.ignoresSafeArea()
                 VStack(spacing: 0) {
-                    // HEADER
+                    // HEADER (uvek na mestu, bez animacije)
                     ZStack(alignment: .top) {
                         Color.black
                             .clipShape(RoundedCorner(radius: 40, corners: [.bottomLeft, .bottomRight]))
@@ -65,14 +61,10 @@ struct MainTrackingView: View {
                             Spacer().frame(height: 24)
                         }
                     }
-                    .offset(y: headerOffset)
-                    .opacity(headerOpacity)
-                    .animation(.easeOut(duration: 0.55), value: headerOffset)
-                    .animation(.easeOut(duration: 0.55), value: headerOpacity)
                     .sheet(isPresented: $showProfile) {
                         ProfileView()
                     }
-                    // KARTICA SA KALENDAROM
+                    // KALENDAR BLOK - animira se kao celina
                     ZStack {
                         RoundedRectangle(cornerRadius: 36, style: .continuous)
                             .fill(Color(red: 0.93, green: 0.93, blue: 0.93))
@@ -118,37 +110,24 @@ struct MainTrackingView: View {
                                 .padding(.bottom, 12)
                                 CalendarGridView(days: ["06","06","07","06","07","06","07","06","07","06","07","13","14","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06"]) // Primeri dana
                             }
-                            Spacer(minLength: 0)
                         }
                         .padding(.horizontal, 28)
                         .padding(.bottom, 24)
                     }
-                    .padding(.horizontal, 0)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(maxWidth: .infinity)
                     .offset(y: calendarOffset)
-                    .opacity(calendarOpacity)
-                    .animation(.easeOut(duration: 0.55), value: calendarOffset)
-                    .animation(.easeOut(duration: 0.55), value: calendarOpacity)
+                    .animation(.easeOut(duration: 0.7), value: calendarOffset)
+                }
+            }
+            .onAppear {
+                loadData()
+                calendarOffset = -geometry.size.height
+                withAnimation(.easeOut(duration: 0.7)) {
+                    calendarOffset = 0
                 }
             }
         }
         .navigationBarHidden(true)
-        .onAppear {
-            loadData()
-            // Entrance animation
-            headerOffset = -60
-            headerOpacity = 0
-            calendarOffset = 60
-            calendarOpacity = 0
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(.easeOut(duration: 0.55)) {
-                    headerOffset = 0
-                    headerOpacity = 1
-                    calendarOffset = 0
-                    calendarOpacity = 1
-                }
-            }
-        }
         .onReceive(appState.$currentScreen) { screen in
             if screen == .main {
                 loadData()
@@ -247,9 +226,7 @@ struct MainTrackingView: View {
             animateFlowerGrowth(at: date)
             
             // Show add milestone button
-            withAnimation(.easeIn(duration: DesignConstants.shortAnimation)) {
-                showAddMilestoneButton = true
-            }
+            showAddMilestoneButton = true
         }
     }
     
@@ -278,15 +255,11 @@ struct MainTrackingView: View {
     }
     
     private func previousMonth() {
-        withAnimation {
-            currentMonth = Calendar.current.date(byAdding: .month, value: -1, to: currentMonth) ?? currentMonth
-        }
+        currentMonth = Calendar.current.date(byAdding: .month, value: -1, to: currentMonth) ?? currentMonth
     }
     
     private func nextMonth() {
-        withAnimation {
-            currentMonth = Calendar.current.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
-        }
+        currentMonth = Calendar.current.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
     }
     
     private func countAvailableDaysInMonth() -> Int {
@@ -335,7 +308,6 @@ struct ProgressDayCellView: View {
             }
         }
         .scaleEffect(isPressed ? 0.9 : 1.0)
-        .animation(.easeInOut(duration: DesignConstants.shortAnimation), value: isPressed)
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
             isPressed = pressing
         }, perform: {})
@@ -390,7 +362,6 @@ struct DayCellView: View {
             }
         }
         .scaleEffect(isPressed ? 0.9 : 1.0)
-        .animation(.easeInOut(duration: DesignConstants.shortAnimation), value: isPressed)
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
             isPressed = pressing
         }, perform: {})
@@ -428,9 +399,7 @@ struct FallingFlowerView: View {
             .blur(radius: 2)
             .opacity(0.7)
             .onAppear {
-                withAnimation(.easeIn(duration: 3)) {
-                    position = flower.endPosition
-                }
+                position = flower.endPosition
             }
     }
 }

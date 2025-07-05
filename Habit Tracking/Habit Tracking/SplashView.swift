@@ -111,14 +111,14 @@ struct SplashView: View {
     }
     
     private func animateWaveAndNavigate(to screen: AppScreen) {
-        withAnimation(.easeInOut(duration: 0.6)) {
+        withAnimation(.easeInOut(duration: 0.4)) {
             isExiting = true
             waveOffset = 200
             buttonsOffset = 200
             blueFlowerOffset = CGSize(width: 200, height: 300)
             redFlowerOffset = CGSize(width: -200, height: 300)
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             appState.navigateTo(screen)
         }
     }
