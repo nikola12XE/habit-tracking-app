@@ -12,118 +12,119 @@ struct MainTrackingView: View {
     @State private var fallingFlowers: [FallingFlower] = []
     @State private var showAddMilestoneButton = false
     @State private var showNoGoalAlert = false
-    @State private var calendarOffset: CGFloat = 0
+    @State private var calendarOffsetAnim: CGFloat = 0 // for animation
     
     var body: some View {
         GeometryReader { geometry in
-            ZStack {
+            ZStack(alignment: .top) {
                 Color.black.ignoresSafeArea()
-                VStack(spacing: 0) {
-                    // HEADER (uvek na mestu, bez animacije)
-                    ZStack(alignment: .top) {
-                        Color.black
-                            .clipShape(RoundedCorner(radius: 40, corners: [.bottomLeft, .bottomRight]))
-                        VStack(alignment: .leading, spacing: 14) {
-                            Text("Your Progress on")
-                                .font(.system(size: 16, weight: .regular))
-                                .foregroundColor(.white.opacity(0.7))
-                                .padding(.top, 100 - geometry.safeAreaInsets.top)
-                                .padding(.leading, 36)
-                            HStack(alignment: .bottom, spacing: 16) {
-                                Text(currentGoal?.goalText?.uppercased() ?? "GROW PORTFOLIO")
-                                    .font(Font.custom("Thunder-BoldLC", size: 75))
-                                    .foregroundColor(.white)
-                                    .lineLimit(2)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .alignmentGuide(.top) { d in d[.top] }
-                                Spacer()
-                                Button(action: { showProfile = true }) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
-                                            .frame(width: 48, height: 48)
-                                            .overlay(
-                                                Circle()
-                                                    .stroke(Color.white, lineWidth: 5)
-                                            )
-                                        Image(systemName: "person.fill")
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: 28, height: 28)
-                                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
-                                    }
-                                }
-                                .padding(.trailing, 24)
-                                .padding(.bottom, 10)
-                            }
+                // HEADER (uvek na mestu, bez animacije)
+                ZStack(alignment: .top) {
+                    Color.black
+                        .clipShape(RoundedCorner(radius: 40, corners: [.bottomLeft, .bottomRight]))
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Your Progress on")
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundColor(.white.opacity(0.7))
+                            .padding(.top, 100 - geometry.safeAreaInsets.top)
                             .padding(.leading, 36)
-                            .padding(.trailing, 0)
-                            Spacer().frame(height: 24)
-                        }
-                    }
-                    .sheet(isPresented: $showProfile) {
-                        ProfileView()
-                    }
-                    // KALENDAR BLOK - animira se kao celina
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 36, style: .continuous)
-                            .fill(Color(red: 0.93, green: 0.93, blue: 0.93))
-                            .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 4)
-                        VStack(spacing: 50) {
-                            // MAJ 2025
-                            VStack(spacing: 0) {
-                                HStack(spacing: 12) {
-                                    Spacer()
-                                    Text("MAY")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(.black)
-                                    Rectangle()
-                                        .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
-                                        .frame(width: 1, height: 16)
-                                    Text("2025")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(.black)
-                                    Spacer()
+                        HStack(alignment: .bottom, spacing: 16) {
+                            Text(currentGoal?.goalText?.uppercased() ?? "GROW PORTFOLIO")
+                                .font(Font.custom("Thunder-BoldLC", size: 75))
+                                .foregroundColor(.white)
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .alignmentGuide(.top) { d in d[.top] }
+                            Spacer()
+                            Button(action: { showProfile = true }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
+                                        .frame(width: 48, height: 48)
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.white, lineWidth: 5)
+                                        )
+                                    Image(systemName: "person.fill")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 28, height: 28)
+                                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
                                 }
-                                .padding(.top, 32)
-                                .padding(.bottom, 12)
-                                CalendarGridView(days: ["06","06","07","06","07","06","06","07","06","07","06","16","17","06","07","06","23","24","06","07","06","23","31"]) // Primeri dana
                             }
-                            Divider()
-                                .background(Color(red: 0.9, green: 0.9, blue: 0.9))
-                            // JUN 2025
-                            VStack(spacing: 0) {
-                                HStack(spacing: 12) {
-                                    Spacer()
-                                    Text("JUN")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(.black)
-                                    Rectangle()
-                                        .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
-                                        .frame(width: 1, height: 16)
-                                    Text("2025")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(.black)
-                                    Spacer()
-                                }
-                                .padding(.top, 32)
-                                .padding(.bottom, 12)
-                                CalendarGridView(days: ["06","06","07","06","07","06","07","06","07","06","07","13","14","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06","07","06"]) // Primeri dana
-                            }
+                            .padding(.trailing, 24)
+                            .padding(.bottom, 10)
+                            .zIndex(2) // ensure profile button is above calendar
                         }
-                        .padding(.horizontal, 28)
-                        .padding(.bottom, 24)
+                        .padding(.leading, 36)
+                        .padding(.trailing, 0)
                     }
-                    .frame(maxWidth: .infinity)
-                    .offset(y: calendarOffset)
-                    .animation(.easeOut(duration: 0.7), value: calendarOffset)
                 }
+                .sheet(isPresented: $showProfile) {
+                    ProfileView()
+                }
+                // KALENDAR BLOK - SIVA POZADINA + ScrollView
+                ZStack(alignment: .top) {
+                    RoundedCorner(radius: 40, corners: [.topLeft, .topRight])
+                        .fill(Color(red: 0.93, green: 0.93, blue: 0.93))
+                        .ignoresSafeArea(edges: .bottom)
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(spacing: 32) {
+                            ForEach(Array(monthsToDisplay.enumerated()), id: \.element) { idx, month in
+                                MonthCalendarView(
+                                    month: month,
+                                    selectedDays: selectedDays,
+                                    progressDays: progressDaysForMonth(month),
+                                    onDayTap: { date in
+                                        handleDayTap(progressDay: progressDayForDate(date), date: date)
+                                    },
+                                    isFirst: idx == 0
+                                )
+                                .padding(.top, idx == 0 ? 58 : 0) // Increase top padding for the first month
+                            }
+                        }
+                        .padding(.bottom, 32)
+                    }
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    // Falling flowers overlay
+                    ForEach(fallingFlowers) { flower in
+                        FallingFlowerView(flower: flower)
+                    }
+                    // Add Milestone button
+                    if showAddMilestoneButton {
+                        VStack {
+                            Spacer()
+                            Button("Add Milestone") {
+                                // This will be handled by the day tap
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .transition(.opacity.combined(with: .scale))
+                            .padding(.horizontal, DesignConstants.largeSpacing)
+                            .padding(.bottom, DesignConstants.largeSpacing)
+                        }
+                        .transition(.opacity.combined(with: .scale))
+                        .onAppear {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                withAnimation(.easeOut(duration: DesignConstants.shortAnimation)) {
+                                    showAddMilestoneButton = false
+                                }
+                            }
+                        }
+                    }
+                }
+                .offset(y: calendarOffsetAnim)
+                .zIndex(1)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
             .onAppear {
                 loadData()
-                calendarOffset = -geometry.size.height
-                withAnimation(.easeOut(duration: 0.7)) {
-                    calendarOffset = 0
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    calendarOffsetAnim = calendarOffset
+                }
+            }
+            .onChange(of: calendarOffset) { newValue in
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    calendarOffsetAnim = newValue
                 }
             }
         }
@@ -145,6 +146,67 @@ struct MainTrackingView: View {
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("You need to set a goal first to start tracking your progress.")
+        }
+    }
+    
+    // MARK: - Calendar Logic
+    
+    // Generiši niz meseci od prvog goala do danas + 12 meseci unapred
+    var monthsToDisplay: [Date] {
+        guard let firstGoalDate = firstGoalCreatedAt else { return [] }
+        let calendar = Calendar.current
+        let startOfFirstMonth = calendar.dateInterval(of: .month, for: firstGoalDate)?.start ?? firstGoalDate
+        let now = Date()
+        let startOfCurrentMonth = calendar.dateInterval(of: .month, for: now)?.start ?? now
+        let monthsBack = calendar.dateComponents([.month], from: startOfFirstMonth, to: startOfCurrentMonth).month ?? 0
+        let monthsForward = 12 // 12 meseci unapred
+        
+        return (-(monthsBack)...monthsForward).compactMap { offset in
+            calendar.date(byAdding: .month, value: offset, to: startOfCurrentMonth)
+        }
+    }
+    
+    // Pronađi datum prvog goala
+    var firstGoalCreatedAt: Date? {
+        coreDataManager.fetchGoals().first?.createdAt
+    }
+    
+    // Pronađi selektovane dane (npr. [0,1,2,3,4] za MTWTF)
+    var selectedDays: [Int] {
+        guard let goal = currentGoal, let nsNumbers = goal.selectedDays as? [NSNumber] else { 
+            return Array(0...6) // Default: svi dani
+        }
+        return nsNumbers.map { $0.intValue }
+    }
+    
+    // Generiši sve datume u mesecu koji su selektovani
+    func daysForMonth(_ month: Date, selectedDays: [Int]) -> [Date] {
+        var result: [Date] = []
+        let calendar = Calendar.current
+        guard let range = calendar.range(of: .day, in: .month, for: month),
+              let startOfMonth = calendar.dateInterval(of: .month, for: month)?.start else {
+            return result
+        }
+        
+        for day in range {
+            if let date = calendar.date(byAdding: .day, value: day - 1, to: startOfMonth) {
+                let weekday = (calendar.component(.weekday, from: date) + 5) % 7 // Monday=0, Sunday=6
+                if selectedDays.contains(weekday) {
+                    result.append(date)
+                }
+            }
+        }
+        return result
+    }
+    
+    // Progress days za određeni mesec
+    func progressDaysForMonth(_ month: Date) -> [ProgressDay] {
+        let days = daysForMonth(month, selectedDays: selectedDays)
+        return progressDays.filter { progressDay in
+            guard let progressDate = progressDay.date else { return false }
+            return days.contains { day in
+                Calendar.current.isDate(progressDate, inSameDayAs: day)
+            }
         }
     }
     
@@ -226,7 +288,9 @@ struct MainTrackingView: View {
             animateFlowerGrowth(at: date)
             
             // Show add milestone button
-            showAddMilestoneButton = true
+            withAnimation(.easeIn(duration: DesignConstants.shortAnimation)) {
+                showAddMilestoneButton = true
+            }
         }
     }
     
@@ -264,6 +328,131 @@ struct MainTrackingView: View {
     
     private func countAvailableDaysInMonth() -> Int {
         return progressDaysForMonth.count
+    }
+    
+    var headerHeight: CGFloat {
+        // Approximate header height based on font and paddings
+        // Adjust this value if needed for pixel-perfect alignment
+        180 // You may need to tweak this value to match your actual header height
+    }
+    
+    // Computed property for dynamic offset
+    var calendarOffset: CGFloat {
+        let text = currentGoal?.goalText ?? ""
+        // Heuristic: if text is long, assume it wraps
+        return text.count > 12 ? 240 : 174
+    }
+}
+
+// MARK: - MonthCalendarView
+struct MonthCalendarView: View {
+    let month: Date
+    let selectedDays: [Int]
+    let progressDays: [ProgressDay]
+    let onDayTap: (Date) -> Void
+    let isFirst: Bool
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header: naziv meseca i godina
+            HStack(spacing: 12) {
+                Spacer()
+                Text(monthTitle)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.black)
+                Rectangle()
+                    .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
+                    .frame(width: 1, height: 16)
+                Text(yearString)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.black)
+                Spacer()
+            }
+            .padding(.top, isFirst ? 0 : 32)
+            .padding(.bottom, 12)
+            
+            // Grid: brojevi od 1 do N za selektovane dane
+            let days = daysForMonth(month, selectedDays: selectedDays)
+            LazyVGrid(columns: Array(repeating: GridItem(.fixed(48), spacing: 8), count: 6), spacing: 16) {
+                ForEach(days.indices, id: \.self) { idx in
+                    Button(action: { onDayTap(days[idx]) }) {
+                        ZStack {
+                            Circle()
+                                .fill(backgroundColor(for: days[idx]))
+                                .frame(width: 48, height: 48)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color(red: 0.79, green: 0.79, blue: 0.79), lineWidth: 1)
+                                )
+                            
+                            if let progressDay = progressDayForDate(days[idx]), progressDay.completed {
+                                if progressDay.milestoneText != nil {
+                                    // Trophy for milestone
+                                    Image(systemName: "trophy.fill")
+                                        .font(.title2)
+                                        .foregroundColor(DesignConstants.accentColor)
+                                } else {
+                                    // Flower
+                                    FlowerView(type: progressDay.flowerType ?? "flower_1")
+                                        .frame(width: 30, height: 30)
+                                }
+                            } else {
+                                Text("\(idx + 1)")
+                                    .font(.system(size: 11, weight: .regular))
+                                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 28)
+            .padding(.bottom, 24)
+        }
+    }
+    
+    var monthTitle: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM"
+        return formatter.string(from: month).uppercased()
+    }
+    
+    var yearString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy"
+        return formatter.string(from: month)
+    }
+    
+    func daysForMonth(_ month: Date, selectedDays: [Int]) -> [Date] {
+        var result: [Date] = []
+        let calendar = Calendar.current
+        guard let range = calendar.range(of: .day, in: .month, for: month),
+              let startOfMonth = calendar.dateInterval(of: .month, for: month)?.start else {
+            return result
+        }
+        
+        for day in range {
+            if let date = calendar.date(byAdding: .day, value: day - 1, to: startOfMonth) {
+                let weekday = (calendar.component(.weekday, from: date) + 5) % 7 // Monday=0, Sunday=6
+                if selectedDays.contains(weekday) {
+                    result.append(date)
+                }
+            }
+        }
+        return result
+    }
+    
+    func progressDayForDate(_ date: Date) -> ProgressDay? {
+        return progressDays.first { progressDay in
+            Calendar.current.isDate(progressDay.date ?? Date.distantPast, inSameDayAs: date)
+        }
+    }
+    
+    func backgroundColor(for date: Date) -> Color {
+        if let progressDay = progressDayForDate(date), progressDay.completed {
+            return DesignConstants.successColor.opacity(0.2)
+        } else {
+            return Color(red: 0.9, green: 0.9, blue: 0.9)
+        }
     }
 }
 
@@ -420,30 +609,6 @@ struct FlowerView: View {
         Image(imageName)
             .resizable()
             .scaledToFit()
-    }
-}
-
-// MARK: - CalendarGridView
-struct CalendarGridView: View {
-    let days: [String] // npr. ["06", "07", ...]
-    let columns = Array(repeating: GridItem(.fixed(48), spacing: 8), count: 6)
-    var body: some View {
-        LazyVGrid(columns: columns, spacing: 16) {
-            ForEach(days.indices, id: \.self) { idx in
-                ZStack {
-                    Circle()
-                        .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
-                        .frame(width: 48, height: 48)
-                        .overlay(
-                            Circle()
-                                .stroke(Color(red: 0.79, green: 0.79, blue: 0.79), lineWidth: 1)
-                        )
-                    Text(days[idx])
-                        .font(.system(size: 11, weight: .regular))
-                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
-                }
-            }
-        }
     }
 }
 
