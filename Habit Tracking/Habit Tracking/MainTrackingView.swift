@@ -361,7 +361,7 @@ struct MonthCalendarView: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.black)
                 Rectangle()
-                    .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
+                    .fill(Color.black)
                     .frame(width: 1, height: 16)
                 Text(yearString)
                     .font(.system(size: 16, weight: .bold))
@@ -369,37 +369,36 @@ struct MonthCalendarView: View {
                 Spacer()
             }
             .padding(.top, isFirst ? 0 : 32)
-            .padding(.bottom, 12)
+            .padding(.bottom, 24) // Increase bottom padding for more space above numbers
             
             // Grid: brojevi od 1 do N za selektovane dane
             let days = daysForMonth(month, selectedDays: selectedDays)
-            LazyVGrid(columns: Array(repeating: GridItem(.fixed(48), spacing: 8), count: 6), spacing: 16) {
+            LazyVGrid(columns: Array(repeating: GridItem(.fixed(54), spacing: 8), count: 6), spacing: 20) {
                 ForEach(days.indices, id: \.self) { idx in
-                    Button(action: { onDayTap(days[idx]) }) {
+                    let date = days[idx]
+                    let isToday = Calendar.current.isDateInToday(date)
+                    Button(action: { onDayTap(date) }) {
                         ZStack {
                             Circle()
-                                .fill(backgroundColor(for: days[idx]))
-                                .frame(width: 48, height: 48)
+                                .fill(isToday ? Color(hex: "4F9BFF").opacity(0.08) : backgroundColor(for: date))
+                                .frame(width: 54, height: 54)
                                 .overlay(
                                     Circle()
-                                        .stroke(Color(red: 0.79, green: 0.79, blue: 0.79), lineWidth: 1)
+                                        .stroke(isToday ? Color(hex: "4F9BFF") : Color(red: 0.79, green: 0.79, blue: 0.79), lineWidth: 1)
                                 )
-                            
-                            if let progressDay = progressDayForDate(days[idx]), progressDay.completed {
+                            if let progressDay = progressDayForDate(date), progressDay.completed {
                                 if progressDay.milestoneText != nil {
-                                    // Trophy for milestone
                                     Image(systemName: "trophy.fill")
                                         .font(.title2)
                                         .foregroundColor(DesignConstants.accentColor)
                                 } else {
-                                    // Flower
                                     FlowerView(type: progressDay.flowerType ?? "flower_1")
-                                        .frame(width: 30, height: 30)
+                                        .frame(width: 34, height: 34)
                                 }
                             } else {
                                 Text("\(idx + 1)")
-                                    .font(.system(size: 11, weight: .regular))
-                                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                                    .font(.system(size: 16, weight: .regular))
+                                    .foregroundColor(isToday ? Color(hex: "4F9BFF") : Color(red: 0.56, green: 0.56, blue: 0.56))
                             }
                         }
                     }
@@ -619,6 +618,33 @@ struct RoundedCorner: Shape {
     func path(in rect: CGRect) -> Path {
         let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
         return Path(path.cgPath)
+    }
+}
+
+// Add this helper for hex color:
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (255, 0, 0, 0)
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
     }
 }
 
