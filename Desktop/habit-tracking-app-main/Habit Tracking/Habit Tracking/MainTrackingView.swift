@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit // Za vibraciju
 
 struct MainTrackingView: View {
     @StateObject private var appState = AppStateManager.shared
@@ -16,6 +17,8 @@ struct MainTrackingView: View {
     @State private var lastFlowerIndex: Int? = nil
     @State private var isAnimatingFlowers = false
     @State private var currentAnimationID = UUID()
+    @State private var clickedDate: Date? = nil
+    @State private var milestoneTimer: Timer? = nil
     
     var body: some View {
         GeometryReader { geometry in
@@ -94,31 +97,37 @@ struct MainTrackingView: View {
                         FallingFlowerView(flower: flower)
                     }
                     .zIndex(1000) // Cvetovi iznad svega
-                    // Add Milestone button
-                    if showAddMilestoneButton {
-                        VStack {
-                            Spacer()
-                            Button("Add Milestone") {
-                                // This will be handled by the day tap
-                            }
-                            .buttonStyle(PrimaryButtonStyle())
-                            .transition(.opacity.combined(with: .scale))
-                            .padding(.horizontal, DesignConstants.largeSpacing)
-                            .padding(.bottom, DesignConstants.largeSpacing)
-                        }
-                        .transition(.opacity.combined(with: .scale))
-                        .onAppear {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                                withAnimation(.easeOut(duration: DesignConstants.shortAnimation)) {
-                                    showAddMilestoneButton = false
-                                }
-                            }
-                        }
-                    }
                 }
                 .offset(y: calendarOffsetAnim)
                 .zIndex(1)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                
+                // Add Milestone button - PREKO SVEGA
+                if showAddMilestoneButton {
+                    VStack {
+                        Spacer()
+                        Button("Add Milestone") {
+                            if let clickedDate = clickedDate {
+                                // Kreiraj progress day ako ne postoji
+                                if let goal = currentGoal {
+                                    let progressDay = progressDayForDate(clickedDate) ?? coreDataManager.createProgressDay(for: goal, date: clickedDate)
+                                    selectedProgressDay = progressDay
+                                    showMilestonePopup = true
+                                    showAddMilestoneButton = false
+                                }
+                            }
+                        }
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 62)
+                        .background(Color.black)
+                        .cornerRadius(100)
+                        .transition(.asymmetric(insertion: .move(edge: .bottom).animation(.easeInOut(duration: 0.8)), removal: .move(edge: .bottom).animation(.easeInOut(duration: 0.8))))
+                        .padding(.bottom, 24)
+                    }
+                    .zIndex(2000) // Preko svega
+                    .transition(.asymmetric(insertion: .move(edge: .bottom).animation(.easeInOut(duration: 0.8)), removal: .move(edge: .bottom).animation(.easeInOut(duration: 0.8))))
+                }
             }
             .onAppear {
                 loadData()
@@ -284,6 +293,23 @@ struct MainTrackingView: View {
             selectedProgressDay = progressDay
             showMilestonePopup = true
         } else {
+            // Vibracija kada se klikne na broj - neprekidna 1 sekunda
+            let notificationFeedback = UINotificationFeedbackGenerator()
+            notificationFeedback.prepare()
+            
+            // Neprekidna vibracija 1 sekunda
+            var vibrationCount = 0
+            Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { timer in
+                notificationFeedback.notificationOccurred(.success)
+                vibrationCount += 1
+                if vibrationCount >= 100 { // 100 * 0.01s = 1s
+                    timer.invalidate()
+                }
+            }
+            
+            // Pamti koji dan je kliknut
+            clickedDate = date
+            
             // Dodeli random flowerType od 1 do 14, ali ne isti kao prethodni
             var newFlowerIndex: Int
             repeat {
@@ -297,9 +323,23 @@ struct MainTrackingView: View {
             progressDays.append(newProgressDay)
             // Animacija cveta - sada prosleđujemo tip
             animateFlowerGrowth(type: randomFlower)
+            
+            // Resetuj timer za Add Milestone dugme
+            milestoneTimer?.invalidate()
+            
             // Prikazi dugme za milestone
-            withAnimation(.easeIn(duration: DesignConstants.shortAnimation)) {
-                showAddMilestoneButton = true
+            if !showAddMilestoneButton {
+                withAnimation(.easeInOut(duration: 0.8)) {
+                    showAddMilestoneButton = true
+                }
+            }
+            
+            // Postavi novi timer za 5 sekundi
+            milestoneTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
+                withAnimation(.easeInOut(duration: 0.8)) {
+                    showAddMilestoneButton = false
+                    clickedDate = nil
+                }
             }
         }
     }
