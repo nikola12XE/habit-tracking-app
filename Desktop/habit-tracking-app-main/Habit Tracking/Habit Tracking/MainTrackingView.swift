@@ -388,9 +388,9 @@ struct MonthCalendarView: View {
                         ZStack {
                             let progressDay = progressDayForDate(date)
                             if let progressDay = progressDay, progressDay.completed {
-                                // Flower PNG animacija (manje, centrirano)
+                                // Flower PNG animacija (veće, viri 20px iznad i ispod)
                                 FlowerView(type: progressDay.flowerType ?? "1")
-                                    .frame(width: 70, height: 70)
+                                    .frame(width: 94, height: 94)
                             } else {
                                 // Broj i krug animacija
                                 ZStack {
@@ -405,9 +405,9 @@ struct MonthCalendarView: View {
                                         .font(.system(size: 16, weight: .regular))
                                         .foregroundColor(isToday ? Color(hex: "4F9BFF") : Color(red: 0.56, green: 0.56, blue: 0.56))
                                 }
-                                .frame(width: 70, height: 70) // Fiksna visina kao cvet
                             }
                         }
+                        .frame(width: 70, height: 70)
                     }
                 }
             }
