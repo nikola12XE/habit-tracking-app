@@ -292,8 +292,8 @@ struct MainTrackingView: View {
             // Markiraj kao completed
             coreDataManager.updateProgressDay(newProgressDay, completed: true, flowerType: randomFlower)
             progressDays.append(newProgressDay)
-            // Animacija cveta (ostaje kao i do sada)
-            animateFlowerGrowth(at: date)
+            // Animacija cveta - sada prosleđujemo tip
+            animateFlowerGrowth(type: randomFlower)
             // Prikazi dugme za milestone
             withAnimation(.easeIn(duration: DesignConstants.shortAnimation)) {
                 showAddMilestoneButton = true
@@ -301,26 +301,30 @@ struct MainTrackingView: View {
         }
     }
     
-    private func animateFlowerGrowth(at date: Date) {
-        // Create falling flowers
-        for _ in 0..<5 {
+    private func animateFlowerGrowth(type: String) {
+        // Create falling flowers istog tipa, različitih veličina
+        let flowerSizes: [CGFloat] = [500, 400, 300, 250, 200, 180, 160, 140, 120, 100]
+        
+        for (index, size) in flowerSizes.enumerated() {
             let flower = FallingFlower(
                 id: UUID(),
-                type: DesignConstants.randomFlowerType(),
+                type: type,
                 startPosition: CGPoint(
                     x: CGFloat.random(in: 0...UIScreen.main.bounds.width),
-                    y: -50
+                    y: -300 - CGFloat(index * 50) // Počinju još više iznad ekrana
                 ),
                 endPosition: CGPoint(
                     x: CGFloat.random(in: 0...UIScreen.main.bounds.width),
-                    y: UIScreen.main.bounds.height + 50
-                )
+                    y: UIScreen.main.bounds.height + 100
+                ),
+                size: size,
+                rotation: Double.random(in: -45...45), // Random rotacija
+                delay: Double(index) * 0.2 // Delay za svaki sledeći cvet
             )
             fallingFlowers.append(flower)
         }
-        
         // Remove flowers after animation
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
             fallingFlowers.removeAll()
         }
     }
@@ -576,6 +580,9 @@ struct FallingFlower: Identifiable {
     let type: String
     let startPosition: CGPoint
     let endPosition: CGPoint
+    let size: CGFloat
+    let rotation: Double
+    let delay: Double
 }
 
 struct FallingFlowerView: View {
@@ -589,12 +596,17 @@ struct FallingFlowerView: View {
     
     var body: some View {
         FlowerView(type: flower.type)
-            .frame(width: 40, height: 40)
+            .frame(width: flower.size, height: flower.size)
+            .rotationEffect(.degrees(flower.rotation))
             .position(position)
-            .blur(radius: 2)
-            .opacity(0.7)
+            .blur(radius: 12) // Smanjen blur
+            .opacity(1.0) // 100% opacity
             .onAppear {
-                position = flower.endPosition
+                DispatchQueue.main.asyncAfter(deadline: .now() + flower.delay) {
+                    withAnimation(.easeIn(duration: 1.8)) { // Ubrzana animacija
+                        position = flower.endPosition
+                    }
+                }
             }
     }
 }
