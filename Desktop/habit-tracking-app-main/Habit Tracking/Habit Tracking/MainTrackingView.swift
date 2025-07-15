@@ -14,6 +14,8 @@ struct MainTrackingView: View {
     @State private var showNoGoalAlert = false
     @State private var calendarOffsetAnim: CGFloat = 0 // for animation
     @State private var lastFlowerIndex: Int? = nil
+    @State private var isAnimatingFlowers = false
+    @State private var currentAnimationID = UUID()
     
     var body: some View {
         GeometryReader { geometry in
@@ -91,6 +93,7 @@ struct MainTrackingView: View {
                     ForEach(fallingFlowers) { flower in
                         FallingFlowerView(flower: flower)
                     }
+                    .zIndex(1000) // Cvetovi iznad svega
                     // Add Milestone button
                     if showAddMilestoneButton {
                         VStack {
@@ -302,6 +305,13 @@ struct MainTrackingView: View {
     }
     
     private func animateFlowerGrowth(type: String) {
+        // Ne brišemo prethodne cvetove - dozvoli paralelne animacije
+        isAnimatingFlowers = true
+        
+        // Generiši novi ID za ovu animaciju
+        let animationID = UUID()
+        currentAnimationID = animationID
+        
         // Create falling flowers istog tipa, različitih veličina
         let flowerSizes: [CGFloat] = [500, 400, 300, 250, 200, 180, 160, 140, 120, 100]
         
@@ -319,13 +329,25 @@ struct MainTrackingView: View {
                 ),
                 size: size,
                 rotation: Double.random(in: -45...45), // Random rotacija
-                delay: Double(index) * 0.2 // Delay za svaki sledeći cvet
+                delay: Double(index) * 0.2, // Delay za svaki sledeći cvet
+                animationID: animationID // Dodaj ID animacije svakom cvetu
             )
+            
             fallingFlowers.append(flower)
         }
-        // Remove flowers after animation
+        
+        // Remove flowers after animation - proveri da li je ovo još uvek aktivna animacija
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-            fallingFlowers.removeAll()
+            // Proveri da li je ovo još uvek aktivna animacija
+            if self.currentAnimationID == animationID {
+                withAnimation(.easeOut(duration: 0.5)) {
+                    // Ukloni samo cvetove iz ove animacije
+                    self.fallingFlowers.removeAll { flower in
+                        flower.animationID == animationID
+                    }
+                    self.isAnimatingFlowers = false
+                }
+            }
         }
     }
     
@@ -583,6 +605,7 @@ struct FallingFlower: Identifiable {
     let size: CGFloat
     let rotation: Double
     let delay: Double
+    let animationID: UUID
 }
 
 struct FallingFlowerView: View {
