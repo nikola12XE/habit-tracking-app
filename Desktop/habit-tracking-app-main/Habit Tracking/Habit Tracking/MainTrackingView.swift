@@ -101,33 +101,6 @@ struct MainTrackingView: View {
                 .offset(y: calendarOffsetAnim)
                 .zIndex(1)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                
-                // Add Milestone button - PREKO SVEGA
-                if showAddMilestoneButton {
-                    VStack {
-                        Spacer()
-                        Button("Add Milestone") {
-                            if let clickedDate = clickedDate {
-                                // Kreiraj progress day ako ne postoji
-                                if let goal = currentGoal {
-                                    let progressDay = progressDayForDate(clickedDate) ?? coreDataManager.createProgressDay(for: goal, date: clickedDate)
-                                    selectedProgressDay = progressDay
-                                    showMilestonePopup = true
-                                    showAddMilestoneButton = false
-                                }
-                            }
-                        }
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 200, height: 62)
-                        .background(Color.black)
-                        .cornerRadius(100)
-                        .transition(.asymmetric(insertion: .move(edge: .bottom).animation(.easeInOut(duration: 0.8)), removal: .move(edge: .bottom).animation(.easeInOut(duration: 0.8))))
-                        .padding(.bottom, 24)
-                    }
-                    .zIndex(2000) // Preko svega
-                    .transition(.asymmetric(insertion: .move(edge: .bottom).animation(.easeInOut(duration: 0.8)), removal: .move(edge: .bottom).animation(.easeInOut(duration: 0.8))))
-                }
             }
             .onAppear {
                 loadData()
@@ -142,16 +115,59 @@ struct MainTrackingView: View {
             }
         }
         .navigationBarHidden(true)
+        .overlay(
+            GeometryReader { geometry in
+                Group {
+                    if showAddMilestoneButton {
+                        Button("Add Milestone") {
+                            if let clickedDate = clickedDate {
+                                // Kreiraj progress day ako ne postoji
+                                if let goal = currentGoal {
+                                    let progressDay = progressDayForDate(clickedDate) ?? coreDataManager.createProgressDay(for: goal, date: clickedDate)
+                                    selectedProgressDay = progressDay
+                                    showMilestonePopup = true
+                                    showAddMilestoneButton = false
+                                }
+                            }
+                        }
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 62)
+                        .background(Color.black)
+                        .cornerRadius(100)
+                        .transition(.asymmetric(insertion: .move(edge: .bottom).animation(.easeInOut(duration: 0.8)), removal: .move(edge: .bottom).animation(.easeInOut(duration: 0.8))))
+                        .position(x: geometry.size.width / 2, y: geometry.size.height - 32) // 32px od dna ekrana
+                        .zIndex(2000) // Preko svega
+                        .transition(.asymmetric(insertion: .move(edge: .bottom).animation(.easeInOut(duration: 0.8)), removal: .move(edge: .bottom).animation(.easeInOut(duration: 0.8))))
+                    }
+                }
+            }
+        )
+        .onAppear {
+            loadData()
+            withAnimation(.easeInOut(duration: 0.5)) {
+                calendarOffsetAnim = calendarOffset
+            }
+        }
+        .onChange(of: calendarOffset) { newValue in
+            withAnimation(.easeInOut(duration: 0.5)) {
+                calendarOffsetAnim = newValue
+            }
+        }
+        .navigationBarHidden(true)
         .onReceive(appState.$currentScreen) { screen in
             if screen == .main {
                 loadData()
             }
         }
-        .sheet(isPresented: $showMilestonePopup) {
-            if let selectedProgressDay = selectedProgressDay {
-                MilestonePopupView(progressDay: selectedProgressDay)
+        .overlay(
+            Group {
+                if showMilestonePopup, let selectedProgressDay = selectedProgressDay {
+                    MilestonePopupView(progressDay: selectedProgressDay, isPresented: $showMilestonePopup)
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                }
             }
-        }
+        )
         .alert("No Goal Set", isPresented: $showNoGoalAlert) {
             Button("Set Goal") {
                 appState.navigateTo(.goalEntry)

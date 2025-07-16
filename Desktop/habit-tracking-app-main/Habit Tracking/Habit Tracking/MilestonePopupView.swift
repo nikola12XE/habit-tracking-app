@@ -1,131 +1,68 @@
 import SwiftUI
 import PhotosUI
+import UIKit
 
 struct MilestonePopupView: View {
     let progressDay: ProgressDay
     @StateObject private var appState = AppStateManager.shared
     @StateObject private var coreDataManager = CoreDataManager.shared
+    @Binding var isPresented: Bool
     
     @State private var milestoneText = ""
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var photoData: Data?
     @State private var showImagePicker = false
+    @State private var showImageActionSheet = false
+    @State private var showCamera = false
+    @State private var showPhotoLibrary = false
+    @State private var backgroundOpacity: Double = 0
+    @State private var modalOffset: CGFloat = UIScreen.main.bounds.height
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: DesignConstants.largeSpacing) {
-                // Header with date
-                VStack(spacing: DesignConstants.smallSpacing) {
-                    Text("Milestone")
-                        .font(DesignConstants.titleFont)
-                        .foregroundColor(DesignConstants.textColor)
-                    
-                    if let date = progressDay.date {
-                        Text(dateString(from: date))
-                            .font(DesignConstants.captionFont)
-                            .foregroundColor(DesignConstants.textColor.opacity(0.7))
+        GeometryReader { geometry in
+            ZStack {
+                // Background overlay
+                Color.black.opacity(backgroundOpacity)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        dismissModal()
                     }
-                }
-                .padding(.top, DesignConstants.largeSpacing)
                 
-                // Content
-                VStack(spacing: DesignConstants.largeSpacing) {
-                    // Text input
-                    VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
-                        Text("What did you accomplish?")
-                            .font(DesignConstants.bodyFont)
-                            .fontWeight(.medium)
-                            .foregroundColor(DesignConstants.textColor)
-                        
-                        TextEditor(text: $milestoneText)
-                            .font(DesignConstants.bodyFont)
-                            .padding(DesignConstants.mediumSpacing)
-                            .background(Color.white)
-                            .cornerRadius(DesignConstants.mediumCornerRadius)
-                            .frame(minHeight: 120)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: DesignConstants.mediumCornerRadius)
-                                    .stroke(DesignConstants.primaryColor.opacity(0.3), lineWidth: 1)
-                            )
-                    }
-                    
-                    // Photo picker
-                    VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
-                        Text("Add a photo (optional)")
-                            .font(DesignConstants.bodyFont)
-                            .fontWeight(.medium)
-                            .foregroundColor(DesignConstants.textColor)
-                        
-                        PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                            HStack {
-                                Image(systemName: "camera.fill")
-                                    .font(.title2)
-                                    .foregroundColor(DesignConstants.primaryColor)
-                                
-                                Text("Choose Photo")
-                                    .font(DesignConstants.bodyFont)
-                                    .foregroundColor(DesignConstants.primaryColor)
-                                
-                                Spacer()
-                            }
-                            .padding(DesignConstants.mediumSpacing)
-                            .background(Color.white)
-                            .cornerRadius(DesignConstants.mediumCornerRadius)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: DesignConstants.mediumCornerRadius)
-                                    .stroke(DesignConstants.primaryColor.opacity(0.3), lineWidth: 1)
-                            )
-                        }
-                        
-                        // Display selected photo
-                        if let photoData = photoData, let uiImage = UIImage(data: photoData) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(height: 200)
-                                .clipped()
-                                .cornerRadius(DesignConstants.mediumCornerRadius)
-                                .overlay(
-                                    Button(action: {
-                                        self.photoData = nil
-                                        self.selectedPhoto = nil
-                                    }) {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .font(.title2)
-                                            .foregroundColor(.white)
-                                            .background(Color.black.opacity(0.5))
-                                            .clipShape(Circle())
-                                    }
-                                    .padding(DesignConstants.smallSpacing),
-                                    alignment: .topTrailing
-                                )
-                        }
-                    }
+                // Modal content
+                VStack {
+                    Spacer()
+                    modalContent
                 }
-                .padding(.horizontal, DesignConstants.largeSpacing)
-                
-                Spacer()
-                
-                // Save button
-                Button("Save Milestone") {
-                    saveMilestone()
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .padding(.horizontal, DesignConstants.largeSpacing)
-                .padding(.bottom, DesignConstants.largeSpacing)
-            }
-            .background(DesignConstants.backgroundColor)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
-                        // Dismiss the sheet
-                        // In a real app, you might want to use a different approach
-                    }
-                    .foregroundColor(DesignConstants.primaryColor)
-                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .offset(y: modalOffset)
+                .ignoresSafeArea(.all, edges: .bottom)
             }
         }
+        .onAppear {
+            // Load existing milestone data
+            milestoneText = progressDay.milestoneText ?? ""
+            photoData = progressDay.milestonePhoto
+            showModal()
+        }
+        .actionSheet(isPresented: $showImageActionSheet) {
+            ActionSheet(
+                title: Text("Add Photo"),
+                message: Text("Choose how you want to add a photo"),
+                buttons: [
+                    .default(Text("Take Photo")) {
+                        showCamera = true
+                    },
+                    .default(Text("Choose from Library")) {
+                        showPhotoLibrary = true
+                    },
+                    .cancel()
+                ]
+            )
+        }
+        .sheet(isPresented: $showCamera) {
+            CameraView(photoData: $photoData)
+        }
+        .photosPicker(isPresented: $showPhotoLibrary, selection: $selectedPhoto, matching: .images)
         .onChange(of: selectedPhoto) { _, newItem in
             Task {
                 if let data = try? await newItem?.loadTransferable(type: Data.self) {
@@ -133,17 +70,232 @@ struct MilestonePopupView: View {
                 }
             }
         }
-        .onAppear {
-            // Load existing milestone data
-            milestoneText = progressDay.milestoneText ?? ""
-            photoData = progressDay.milestonePhoto
+    }
+    
+    private var modalContent: some View {
+        VStack(spacing: 0) {
+            // Top section with delete button and line
+            topSection
+            
+            // Main content
+            VStack(spacing: 24) {
+                trophySection
+                inputSection
+            }
+            .padding(.horizontal, 0)
+            .padding(.top, 24)
+            
+            Spacer()
+            
+            // Bottom buttons
+            bottomButtons
         }
+        .background(Color(red: 0.929, green: 0.929, blue: 0.929))
+        .cornerRadius(20)
+        .frame(height: 445)
+        .padding(.top, 24)
+        .animation(.easeInOut(duration: 0.3), value: photoData != nil)
+    }
+    
+    private var topSection: some View {
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                // Swipe down line
+                Rectangle()
+                    .fill(Color(red: 0.787, green: 0.787, blue: 0.787))
+                    .frame(width: 38, height: 5)
+                    .cornerRadius(2.5)
+                    .position(x: geometry.size.width / 2, y: 80)
+                
+                HStack {
+                    // Delete button
+                    Button(action: {
+                        dismissModal()
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(red: 0.894, green: 0.894, blue: 0.894))
+                                .frame(width: 48, height: 48)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color(red: 0.463, green: 0.463, blue: 0.463).opacity(0.2), lineWidth: 1)
+                                )
+                            
+                            Image(systemName: "trash")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(Color(red: 0.463, green: 0.463, blue: 0.463))
+                        }
+                    }
+                    .padding(.leading, 24)
+                    .position(x: 24 + 24, y: 80) // 24px od leve ivice + 24px (pola širine kruga)
+                    
+                    Spacer()
+                    
+                    // Empty space for balance
+                    Circle()
+                        .fill(Color.clear)
+                        .frame(width: 48, height: 48)
+                        .padding(.trailing, 24)
+                }
+            }
+        }
+    }
+    
+    private var trophySection: some View {
+        VStack(spacing: 10) {
+            // Trophy icon
+            ZStack {
+                Circle()
+                    .fill(Color(red: 0.894, green: 0.894, blue: 0.894))
+                    .frame(width: 52, height: 52)
+                
+                Image(systemName: "trophy.fill")
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundColor(Color(red: 0.894, green: 0.894, blue: 0.894))
+                    .overlay(
+                        Image(systemName: "trophy.fill")
+                            .font(.system(size: 28, weight: .medium))
+                            .foregroundColor(Color(red: 0.894, green: 0.894, blue: 0.894))
+                            .blur(radius: 0.5)
+                    )
+            }
+            
+            // Title and date
+            VStack(spacing: 4) {
+                Text("Milestone")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                
+                if let date = progressDay.date {
+                    Text(dateString(from: date))
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(Color.black)
+                }
+            }
+        }
+    }
+    
+    private var inputSection: some View {
+        VStack(spacing: 10) {
+            // Text input field - stil iz onboarding ekrana
+            HStack {
+                TextField("Enter your achievement", text: $milestoneText)
+                    .font(.custom("Inter_24pt-SemiBold", size: 16))
+                    .tracking(-0.16)
+                    .foregroundColor(.black)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .multilineTextAlignment(.leading)
+                    .padding(.horizontal, 24)
+                
+                Spacer()
+                
+                // Paperclip icon - attach button
+                Button(action: {
+                    showImageActionSheet = true
+                }) {
+                    Image(systemName: "paperclip")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                }
+                .padding(.trailing, 24)
+            }
+            .frame(height: 52)
+            .background(Color(red: 0.894, green: 0.894, blue: 0.894))
+            .cornerRadius(38)
+            .overlay(
+                RoundedRectangle(cornerRadius: 38)
+                    .stroke(Color(red: 0.46, green: 0.46, blue: 0.46).opacity(0.28), lineWidth: 1)
+            )
+            
+            // Placeholder text - stil iz onboarding ekrana
+            Text("Enter your achievement")
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
+                .padding(.top, 8)
+            
+            // Show selected image if exists
+            if let photoData = photoData, let uiImage = UIImage(data: photoData) {
+                VStack(spacing: 8) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(height: 120)
+                        .clipped()
+                        .cornerRadius(12)
+                        .overlay(
+                            Button(action: {
+                                self.photoData = nil
+                                self.selectedPhoto = nil
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.white)
+                                    .background(Color.black.opacity(0.5))
+                                    .clipShape(Circle())
+                            }
+                            .padding(8),
+                            alignment: .topTrailing
+                        )
+                }
+            }
+        }
+        .padding(.horizontal, 24) // 24px od ivica ekrana
+    }
+    
+    private var bottomButtons: some View {
+        HStack(spacing: 10) {
+            // Cancel button
+            Button(action: {
+                dismissModal()
+            }) {
+                Text("Cancel")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Color.black)
+                    .frame(width: 114, height: 62)
+                    .background(Color(red: 0.894, green: 0.894, blue: 0.894))
+                    .cornerRadius(100)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 100)
+                            .stroke(Color(red: 0.851, green: 0.851, blue: 0.851), lineWidth: 1)
+                    )
+            }
+            
+            // Save button
+            Button(action: {
+                saveMilestone()
+            }) {
+                Text("Save Milestone")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Color.white)
+                    .frame(width: 200, height: 62)
+                    .background(Color.black)
+                    .cornerRadius(100)
+            }
+        }
+        .padding(.horizontal, 58)
+        .padding(.bottom, 32)
     }
     
     private func dateString(from date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.dateStyle = .full
+        formatter.dateFormat = "dd. MM. yyyy."
         return formatter.string(from: date)
+    }
+    
+    private func showModal() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            backgroundOpacity = 0.2
+            modalOffset = 0
+        }
+    }
+    
+    private func dismissModal() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            backgroundOpacity = 0
+            modalOffset = UIScreen.main.bounds.height
+        } completion: {
+            isPresented = false
+        }
     }
     
     private func saveMilestone() {
@@ -156,11 +308,12 @@ struct MilestonePopupView: View {
         // Update the progress day to mark as completed
         coreDataManager.updateProgressDay(progressDay, completed: true)
         
-        // Dismiss the sheet
-        // In a real app, you might want to use a different approach
+        dismissModal()
     }
 }
 
+
+
 #Preview {
-    MilestonePopupView(progressDay: ProgressDay())
+    MilestonePopupView(progressDay: ProgressDay(), isPresented: .constant(true))
 } 
