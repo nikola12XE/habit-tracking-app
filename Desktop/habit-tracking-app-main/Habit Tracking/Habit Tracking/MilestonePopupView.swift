@@ -17,6 +17,8 @@ struct MilestonePopupView: View {
     @State private var showPhotoLibrary = false
     @State private var backgroundOpacity: Double = 0
     @State private var modalOffset: CGFloat = UIScreen.main.bounds.height
+    @State private var showCancelAlert = false
+    @State private var showDeleteAlert = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -37,7 +39,11 @@ struct MilestonePopupView: View {
                     DragGesture()
                         .onEnded { value in
                             if value.translation.height > 100 {
-                                dismissModal()
+                                if !milestoneText.isEmpty || photoData != nil {
+                                    showCancelAlert = true
+                                } else {
+                                    dismissModal()
+                                }
                             }
                         }
                 )
@@ -118,7 +124,7 @@ struct MilestonePopupView: View {
             HStack {
                 // Delete button
                 Button(action: {
-                    dismissModal()
+                    showDeleteAlert = true
                 }) {
                     ZStack {
                         Circle()
@@ -132,6 +138,12 @@ struct MilestonePopupView: View {
                             .resizable()
                             .frame(width: 24, height: 24)
                     }
+                }
+                .alert("Are you sure you want to delete?", isPresented: $showDeleteAlert) {
+                    Button("Delete", role: .destructive) {
+                        deleteMilestone()
+                    }
+                    Button("Cancel", role: .cancel) {}
                 }
                 .padding(.leading, 24)
                 .padding(.top, 8) // Podigni trash ikonicu
@@ -221,8 +233,9 @@ struct MilestonePopupView: View {
                                 self.photoData = nil
                                 self.selectedPhoto = nil
                             }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.title2)
+                                Image("XIcon")
+                                    .resizable()
+                                    .frame(width: 24, height: 24)
                                     .foregroundColor(.white)
                                     .background(Color.black.opacity(0.5))
                                     .clipShape(Circle())
@@ -242,7 +255,11 @@ struct MilestonePopupView: View {
         HStack(spacing: 10) {
             // Cancel button
             Button(action: {
-                dismissModal()
+                if !milestoneText.isEmpty || photoData != nil {
+                    showCancelAlert = true
+                } else {
+                    dismissModal()
+                }
             }) {
                 Text("Cancel")
                     .font(.system(size: 16, weight: .semibold))
@@ -254,6 +271,17 @@ struct MilestonePopupView: View {
                         RoundedRectangle(cornerRadius: 100)
                             .stroke(Color(red: 0.851, green: 0.851, blue: 0.851), lineWidth: 1)
                     )
+            }
+            .alert("Are you sure you\nwant to leave?", isPresented: $showCancelAlert) {
+                Button("Go Back", role: .cancel) {}
+                    .font(.system(size: 16, weight: .regular))
+                Button("Leave", role: .destructive) {
+                    dismissModal()
+                }
+                    .foregroundColor(.blue)
+                    .font(.system(size: 16, weight: .regular))
+            } message: {
+                Text("Your edits will be lost")
             }
             
             // Save button
@@ -304,6 +332,15 @@ struct MilestonePopupView: View {
         // Update the progress day to mark as completed
         coreDataManager.updateProgressDay(progressDay, completed: true)
         
+        dismissModal()
+    }
+    
+    private func deleteMilestone() {
+        // Resetuj progressDay na prazan broj
+        progressDay.milestoneText = nil
+        progressDay.milestonePhoto = nil
+        progressDay.completed = false
+        progressDay.flowerType = nil
         dismissModal()
     }
 }

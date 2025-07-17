@@ -470,13 +470,21 @@ struct MonthCalendarView: View {
                         ZStack {
                             let progressDay = progressDayForDate(date)
                             if let progressDay = progressDay, progressDay.completed {
-                                if progressDay.milestoneText != nil {
-                                    FlowerView(type: "milestone")
-                                        .frame(width: 94, height: 94)
-                                } else {
-                                    FlowerView(type: progressDay.flowerType ?? "1")
-                                        .frame(width: 94, height: 94)
+                                ZStack {
+                                    if progressDay.milestoneText == nil {
+                                        FlowerView(type: progressDay.flowerType ?? "1")
+                                            .frame(width: 94, height: 94)
+                                            .id("flower-\(progressDay.date?.timeIntervalSince1970 ?? 0)")
+                                            .transition(.scale.combined(with: .opacity))
+                                    }
+                                    if progressDay.milestoneText != nil {
+                                        FlowerView(type: "milestone")
+                                            .frame(width: 94, height: 94)
+                                            .id("milestone-\(progressDay.date?.timeIntervalSince1970 ?? 0)")
+                                            .transition(.scale.combined(with: .opacity))
+                                    }
                                 }
+                                .animation(.easeInOut(duration: 0.4), value: progressDay.milestoneText)
                             } else {
                                 // Broj i krug animacija
                                 ZStack {
@@ -570,13 +578,21 @@ struct ProgressDayCellView: View {
                     )
                 
                 if let progressDay = progressDay, progressDay.completed {
-                    if progressDay.milestoneText != nil {
-                        FlowerView(type: "milestone")
-                            .frame(width: 30, height: 30)
-                    } else {
-                        FlowerView(type: progressDay.flowerType ?? "flower_1")
-                            .frame(width: 30, height: 30)
+                    ZStack {
+                        if progressDay.milestoneText == nil {
+                            FlowerView(type: progressDay.flowerType ?? "flower_1")
+                                .frame(width: 30, height: 30)
+                                .id("flower-small-\(progressDay.date?.timeIntervalSince1970 ?? 0)")
+                                .transition(.scale.combined(with: .opacity))
+                        }
+                        if progressDay.milestoneText != nil {
+                            FlowerView(type: "milestone")
+                                .frame(width: 30, height: 30)
+                                .id("milestone-small-\(progressDay.date?.timeIntervalSince1970 ?? 0)")
+                                .transition(.scale.combined(with: .opacity))
+                        }
                     }
+                    .animation(.easeInOut(duration: 0.4), value: progressDay.milestoneText)
                 } else {
                     Text("\(dayNumber)")
                         .font(DesignConstants.bodyFont)
@@ -624,9 +640,13 @@ struct DayCellView: View {
                     if progressDay.milestoneText != nil {
                         FlowerView(type: "milestone")
                             .frame(width: 30, height: 30)
+                            .transition(.scale.combined(with: .opacity))
+                            .animation(.easeInOut(duration: 0.3), value: progressDay.milestoneText)
                     } else {
                         FlowerView(type: progressDay.flowerType ?? "flower_1")
                             .frame(width: 30, height: 30)
+                            .transition(.scale.combined(with: .opacity))
+                            .animation(.easeInOut(duration: 0.3), value: progressDay.milestoneText)
                     }
                 } else {
                     Text("\(Calendar.current.component(.day, from: date))")
