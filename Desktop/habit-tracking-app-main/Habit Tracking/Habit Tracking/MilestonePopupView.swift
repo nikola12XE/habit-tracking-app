@@ -338,6 +338,8 @@ struct MilestonePopupView: View {
         .padding(.horizontal, 58)
     }
     
+
+    
     private func dateString(from date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "dd. MM. yyyy."
@@ -361,9 +363,16 @@ struct MilestonePopupView: View {
     }
     
     private func saveMilestone() {
+        // Proveri da li je milestone prazan
+        let trimmedText = milestoneText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedText.isEmpty && photoData == nil {
+            // Ne sačuvaj prazan milestone
+            return
+        }
+        
         coreDataManager.addMilestone(
             to: progressDay,
-            text: milestoneText,
+            text: trimmedText.isEmpty ? "" : trimmedText,
             photo: photoData
         )
         

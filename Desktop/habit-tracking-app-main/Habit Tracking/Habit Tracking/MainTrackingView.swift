@@ -304,9 +304,16 @@ struct MainTrackingView: View {
             return 
         }
         
-        // Proveri da li je datum u budućnosti
-        if date > Date() {
-            return // Ne dozvoli klik na buduće dane
+        // Proveri da li je datum u budućim mesecima (ne u trenutnom)
+        let calendar = Calendar.current
+        let currentMonth = calendar.component(.month, from: Date())
+        let currentYear = calendar.component(.year, from: Date())
+        let dateMonth = calendar.component(.month, from: date)
+        let dateYear = calendar.component(.year, from: date)
+        
+        // Onemogući klik na dane u budućim mesecima
+        if dateYear > currentYear || (dateYear == currentYear && dateMonth > currentMonth) {
+            return // Ne dozvoli klik na dane u budućim mesecima
         }
         
         if let progressDay = progressDay {
