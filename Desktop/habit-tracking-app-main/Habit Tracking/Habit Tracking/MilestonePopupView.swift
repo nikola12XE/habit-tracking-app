@@ -19,6 +19,9 @@ struct MilestonePopupView: View {
     @State private var modalOffset: CGFloat = UIScreen.main.bounds.height
     @State private var showCancelAlert = false
     @State private var showDeleteAlert = false
+    @FocusState private var isInputFocused: Bool
+    @GestureState private var dragOffset: CGFloat = 0
+    @State private var keyboardHeight: CGFloat = 0
     
     var body: some View {
         GeometryReader { geometry in
@@ -31,12 +34,21 @@ struct MilestonePopupView: View {
                 VStack {
                     Spacer()
                     modalContent
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            isInputFocused = false
+                        }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                .offset(y: modalOffset)
+                .offset(y: max(0, modalOffset + dragOffset))
                 .ignoresSafeArea(.all, edges: .bottom)
                 .gesture(
                     DragGesture()
+                        .updating($dragOffset) { value, state, _ in
+                            if value.translation.height > 0 {
+                                state = value.translation.height
+                            }
+                        }
                         .onEnded { value in
                             if value.translation.height > 100 {
                                 if !milestoneText.isEmpty || photoData != nil {
@@ -81,10 +93,15 @@ struct MilestonePopupView: View {
                 }
             }
         }
+        .onChange(of: photoData) { _, newValue in
+            if newValue != nil {
+                isInputFocused = false
+            }
+        }
     }
     
     private var modalContent: some View {
-        ZStack(alignment: .bottom) {
+        VStack(spacing: 0) {
             // Main content area
             VStack(spacing: 0) {
                 // Top section with delete button and line
@@ -102,14 +119,16 @@ struct MilestonePopupView: View {
             }
             .background(Color(red: 0.929, green: 0.929, blue: 0.929))
             .clipShape(RoundedCorner(radius: 40, corners: [.topLeft, .topRight]))
-            .frame(height: photoData != nil ? 650 : 445) // Povećana visina kada postoji slika
+            .frame(height: photoData != nil ? 650 + (keyboardHeight > 0 && photoData != nil ? keyboardHeight : 0) : 445 + (keyboardHeight > 0 && photoData == nil ? keyboardHeight : 0))
             .padding(.top, 24)
             
-            // Bottom buttons - fiksirana pozicija na dnu
+            // Bottom buttons - sada u VStack-u
             bottomButtons
+                .padding(.bottom, keyboardHeight > 0 ? 24 : 48)
         }
         .animation(.easeInOut(duration: 0.3), value: photoData != nil)
-
+        .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
+        .keyboardAdaptive(keyboardHeight: $keyboardHeight)
     }
     
     private var topSection: some View {
@@ -184,26 +203,33 @@ struct MilestonePopupView: View {
     private var inputSection: some View {
         VStack(spacing: 10) {
             // Text input field - stil iz onboarding ekrana
-            HStack {
-                TextField("Enter achievement", text: $milestoneText)
-                    .font(.custom("Inter_24pt-SemiBold", size: 16))
-                    .tracking(-0.16)
-                    .foregroundColor(.black)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .multilineTextAlignment(.leading)
-                    .padding(.horizontal, 24)
-                
-                Spacer()
-                
-                // Paperclip icon - attach button
-                Button(action: {
-                    showImageActionSheet = true
-                }) {
-                    Image("Attach")
-                        .resizable()
-                        .frame(width: 20, height: 20)
+            ZStack(alignment: .leading) {
+                if milestoneText.isEmpty && !isInputFocused {
+                    Text("Enter achievement")
+                        .font(.custom("Inter_24pt-Regular", size: 16))
+                        .foregroundColor(Color(red: 0.561, green: 0.561, blue: 0.561))
+                        .padding(.leading, 24)
                 }
-                .padding(.trailing, 24)
+                HStack {
+                    TextField("", text: $milestoneText)
+                        .font(.custom("Inter_24pt-SemiBold", size: 16))
+                        .tracking(-0.16)
+                        .foregroundColor(.black)
+                        .textFieldStyle(PlainTextFieldStyle())
+                        .multilineTextAlignment(.leading)
+                        .padding(.horizontal, 24)
+                        .focused($isInputFocused)
+                    Spacer()
+                    // Paperclip icon - attach button
+                    Button(action: {
+                        showImageActionSheet = true
+                    }) {
+                        Image("Attach")
+                            .resizable()
+                            .frame(width: 20, height: 20)
+                    }
+                    .padding(.trailing, 24)
+                }
             }
             .frame(height: 52)
             .background(Color(red: 0.894, green: 0.894, blue: 0.894))
@@ -276,13 +302,14 @@ struct MilestonePopupView: View {
                     )
             }
             .alert("Are you sure you\nwant to leave?", isPresented: $showCancelAlert) {
-                Button("Go Back", role: .cancel) {}
-                    .font(.system(size: 16, weight: .regular))
                 Button("Leave", role: .destructive) {
                     dismissModal()
                 }
-                    .foregroundColor(.blue)
-                    .font(.system(size: 16, weight: .regular))
+                .foregroundColor(.blue)
+                .font(.system(size: 16, weight: .regular))
+                Button("Stay", role: .cancel) {}
+                .foregroundColor(.blue)
+                .font(.system(size: 16, weight: .regular))
             } message: {
                 Text("Your edits will be lost")
             }
@@ -357,4 +384,30 @@ struct MilestonePopupView: View {
 
 #Preview {
     MilestonePopupView(progressDay: ProgressDay(), isPresented: .constant(true))
+}
+
+// MARK: - Keyboard Adaptive Modifier
+extension View {
+    func keyboardAdaptive(keyboardHeight: Binding<CGFloat>) -> some View {
+        self.modifier(KeyboardAdaptiveModifier(keyboardHeight: keyboardHeight))
+    }
+}
+
+struct KeyboardAdaptiveModifier: ViewModifier {
+    @Binding var keyboardHeight: CGFloat
+    
+    func body(content: Content) -> some View {
+        content
+            .padding(.bottom, keyboardHeight)
+            .onAppear {
+                NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
+                    let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect ?? .zero
+                    keyboardHeight = keyboardFrame.height
+                }
+                
+                NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+                    keyboardHeight = 0
+                }
+            }
+    }
 } 

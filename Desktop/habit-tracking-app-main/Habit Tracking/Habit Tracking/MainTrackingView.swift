@@ -180,7 +180,7 @@ struct MainTrackingView: View {
     
     // MARK: - Calendar Logic
     
-    // Generiši niz meseci od prvog goala do danas + 12 meseci unapred
+    // Generiši niz meseci od prvog goala do danas + unlimited meseci unapred
     var monthsToDisplay: [Date] {
         guard let firstGoalDate = firstGoalCreatedAt else { return [] }
         let calendar = Calendar.current
@@ -188,7 +188,7 @@ struct MainTrackingView: View {
         let now = Date()
         let startOfCurrentMonth = calendar.dateInterval(of: .month, for: now)?.start ?? now
         let monthsBack = calendar.dateComponents([.month], from: startOfFirstMonth, to: startOfCurrentMonth).month ?? 0
-        let monthsForward = 12 // 12 meseci unapred
+        let monthsForward = 60 // 60 meseci unapred (5 godina) - praktično unlimited
         
         return (-(monthsBack)...monthsForward).compactMap { offset in
             calendar.date(byAdding: .month, value: offset, to: startOfCurrentMonth)
@@ -302,6 +302,11 @@ struct MainTrackingView: View {
         guard let goal = currentGoal else { 
             showNoGoalAlert = true
             return 
+        }
+        
+        // Proveri da li je datum u budućnosti
+        if date > Date() {
+            return // Ne dozvoli klik na buduće dane
         }
         
         if let progressDay = progressDay {
