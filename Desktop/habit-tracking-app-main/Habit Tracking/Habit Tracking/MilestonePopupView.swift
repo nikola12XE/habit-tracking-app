@@ -24,9 +24,6 @@ struct MilestonePopupView: View {
                 // Background overlay
                 Color.black.opacity(backgroundOpacity)
                     .ignoresSafeArea()
-                    .onTapGesture {
-                        dismissModal()
-                    }
                 
                 // Modal content
                 VStack {
@@ -36,6 +33,14 @@ struct MilestonePopupView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 .offset(y: modalOffset)
                 .ignoresSafeArea(.all, edges: .bottom)
+                .gesture(
+                    DragGesture()
+                        .onEnded { value in
+                            if value.translation.height > 100 {
+                                dismissModal()
+                            }
+                        }
+                )
             }
         }
         .onAppear {
@@ -73,28 +78,32 @@ struct MilestonePopupView: View {
     }
     
     private var modalContent: some View {
-        VStack(spacing: 0) {
-            // Top section with delete button and line
-            topSection
-            
-            // Main content
-            VStack(spacing: 24) {
-                trophySection
-                inputSection
+        ZStack(alignment: .bottom) {
+            // Main content area
+            VStack(spacing: 0) {
+                // Top section with delete button and line
+                topSection
+                
+                // Main content
+                VStack(spacing: 24) {
+                    trophySection
+                    inputSection
+                }
+                .padding(.horizontal, 0)
+                .offset(y: -16)
+                
+                Spacer()
             }
-            .padding(.horizontal, 0)
+            .background(Color(red: 0.929, green: 0.929, blue: 0.929))
+            .clipShape(RoundedCorner(radius: 40, corners: [.topLeft, .topRight]))
+            .frame(height: photoData != nil ? 600 : 445)
             .padding(.top, 24)
             
-            Spacer()
-            
-            // Bottom buttons
+            // Bottom buttons - fiksirana pozicija na dnu
             bottomButtons
         }
-        .background(Color(red: 0.929, green: 0.929, blue: 0.929))
-        .cornerRadius(20)
-        .frame(height: 445)
-        .padding(.top, 24)
         .animation(.easeInOut(duration: 0.3), value: photoData != nil)
+
     }
     
     private var topSection: some View {
@@ -119,15 +128,13 @@ struct MilestonePopupView: View {
                                 Circle()
                                     .stroke(Color(red: 0.463, green: 0.463, blue: 0.463).opacity(0.2), lineWidth: 1)
                             )
-                        
-                        Image(systemName: "trash")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(Color(red: 0.463, green: 0.463, blue: 0.463))
+                        Image("Trash")
+                            .resizable()
+                            .frame(width: 24, height: 24)
                     }
                 }
                 .padding(.leading, 24)
-                .padding(.top, 16) // Pozicioniraj gornju ivicu kruga na 16px od vrha
-                .offset(y: -24) // Kompenzuj za visinu kruga (48px/2 = 24px)
+                .padding(.top, 8) // Podigni trash ikonicu
                 
                 Spacer()
                 
@@ -143,32 +150,20 @@ struct MilestonePopupView: View {
     private var trophySection: some View {
         VStack(spacing: 10) {
             // Trophy icon
-            ZStack {
-                Circle()
-                    .fill(Color(red: 0.894, green: 0.894, blue: 0.894))
-                    .frame(width: 52, height: 52)
-                
-                Image(systemName: "trophy.fill")
-                    .font(.system(size: 28, weight: .medium))
-                    .foregroundColor(Color(red: 0.894, green: 0.894, blue: 0.894))
-                    .overlay(
-                        Image(systemName: "trophy.fill")
-                            .font(.system(size: 28, weight: .medium))
-                            .foregroundColor(Color(red: 0.894, green: 0.894, blue: 0.894))
-                            .blur(radius: 0.5)
-                    )
-            }
-            
+            Image("Trophy")
+                .resizable()
+                .frame(width: 52, height: 52)
             // Title and date
             VStack(spacing: 4) {
                 Text("Milestone")
-                    .font(.system(size: 24, weight: .bold))
+                    .font(.system(size: 24, weight: .semibold, design: .default))
+                    .tracking(-0.04 * 24)
                     .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
-                
                 if let date = progressDay.date {
                     Text(dateString(from: date))
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(Color.black)
+                        .font(.custom("Inter_24pt-Regular", size: 14))
+                        .tracking(-0.04 * 14) // -4% letter spacing
+                        .foregroundColor(Color(red: 0.561, green: 0.561, blue: 0.561)) // #8F8F8F
                 }
             }
         }
@@ -178,7 +173,7 @@ struct MilestonePopupView: View {
         VStack(spacing: 10) {
             // Text input field - stil iz onboarding ekrana
             HStack {
-                TextField("Enter your achievement", text: $milestoneText)
+                TextField("Enter achievement", text: $milestoneText)
                     .font(.custom("Inter_24pt-SemiBold", size: 16))
                     .tracking(-0.16)
                     .foregroundColor(.black)
@@ -192,9 +187,9 @@ struct MilestonePopupView: View {
                 Button(action: {
                     showImageActionSheet = true
                 }) {
-                    Image(systemName: "paperclip")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                    Image("Attach")
+                        .resizable()
+                        .frame(width: 20, height: 20)
                 }
                 .padding(.trailing, 24)
             }
@@ -207,18 +202,18 @@ struct MilestonePopupView: View {
             )
             
             // Placeholder text - stil iz onboarding ekrana
-            Text("Enter your achievement")
-                .font(.system(size: 14, weight: .regular))
-                .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
+            Text("Enter achievement")
+                .font(.custom("Inter_24pt-Regular", size: 14))
+                .foregroundColor(Color(red: 0.561, green: 0.561, blue: 0.561)) // #8F8F8F
                 .padding(.top, 8)
             
             // Show selected image if exists
             if let photoData = photoData, let uiImage = UIImage(data: photoData) {
-                VStack(spacing: 8) {
+                VStack(spacing: 0) {
                     Image(uiImage: uiImage)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(height: 120)
+                        .frame(height: 160) // Povećana visina slike
                         .clipped()
                         .cornerRadius(12)
                         .overlay(
@@ -236,6 +231,8 @@ struct MilestonePopupView: View {
                             alignment: .topTrailing
                         )
                 }
+                .padding(.top, 14) // 14px razmak od input-a
+                .padding(.bottom, 24) // 24px od dugmića
             }
         }
         .padding(.horizontal, 24) // 24px od ivica ekrana
@@ -310,6 +307,7 @@ struct MilestonePopupView: View {
         dismissModal()
     }
 }
+
 
 
 

@@ -118,7 +118,7 @@ struct MainTrackingView: View {
         .overlay(
             GeometryReader { geometry in
                 Group {
-                    if showAddMilestoneButton {
+                if showAddMilestoneButton {
                         Button("Add Milestone") {
                             if let clickedDate = clickedDate {
                                 // Kreiraj progress day ako ne postoji
@@ -143,15 +143,15 @@ struct MainTrackingView: View {
                 }
             }
         )
-        .onAppear {
-            loadData()
-            withAnimation(.easeInOut(duration: 0.5)) {
-                calendarOffsetAnim = calendarOffset
+            .onAppear {
+                loadData()
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    calendarOffsetAnim = calendarOffset
+                }
             }
-        }
-        .onChange(of: calendarOffset) { newValue in
-            withAnimation(.easeInOut(duration: 0.5)) {
-                calendarOffsetAnim = newValue
+            .onChange(of: calendarOffset) { newValue in
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    calendarOffsetAnim = newValue
             }
         }
         .navigationBarHidden(true)
@@ -470,9 +470,13 @@ struct MonthCalendarView: View {
                         ZStack {
                             let progressDay = progressDayForDate(date)
                             if let progressDay = progressDay, progressDay.completed {
-                                // Flower PNG animacija (veće, viri 20px iznad i ispod)
-                                FlowerView(type: progressDay.flowerType ?? "1")
-                                    .frame(width: 94, height: 94)
+                                if progressDay.milestoneText != nil {
+                                    FlowerView(type: "milestone")
+                                        .frame(width: 94, height: 94)
+                                } else {
+                                    FlowerView(type: progressDay.flowerType ?? "1")
+                                        .frame(width: 94, height: 94)
+                                }
                             } else {
                                 // Broj i krug animacija
                                 ZStack {
@@ -567,12 +571,9 @@ struct ProgressDayCellView: View {
                 
                 if let progressDay = progressDay, progressDay.completed {
                     if progressDay.milestoneText != nil {
-                        // Trophy for milestone
-                        Image(systemName: "trophy.fill")
-                            .font(.title2)
-                            .foregroundColor(DesignConstants.accentColor)
+                        FlowerView(type: "milestone")
+                            .frame(width: 30, height: 30)
                     } else {
-                        // Flower
                         FlowerView(type: progressDay.flowerType ?? "flower_1")
                             .frame(width: 30, height: 30)
                     }
@@ -621,12 +622,9 @@ struct DayCellView: View {
                 
                 if let progressDay = progressDay, progressDay.completed {
                     if progressDay.milestoneText != nil {
-                        // Trophy for milestone
-                        Image(systemName: "trophy.fill")
-                            .font(.title2)
-                            .foregroundColor(DesignConstants.accentColor)
+                        FlowerView(type: "milestone")
+                            .frame(width: 30, height: 30)
                     } else {
-                        // Flower
                         FlowerView(type: progressDay.flowerType ?? "flower_1")
                             .frame(width: 30, height: 30)
                     }
