@@ -98,45 +98,44 @@ struct MilestonePopupView: View {
     }
     
     private var topSection: some View {
-        GeometryReader { geometry in
-            VStack(spacing: 0) {
-                // Swipe down line
-                Rectangle()
-                    .fill(Color(red: 0.787, green: 0.787, blue: 0.787))
-                    .frame(width: 38, height: 5)
-                    .cornerRadius(2.5)
-                    .position(x: geometry.size.width / 2, y: 80)
-                
-                HStack {
-                    // Delete button
-                    Button(action: {
-                        dismissModal()
-                    }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color(red: 0.894, green: 0.894, blue: 0.894))
-                                .frame(width: 48, height: 48)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color(red: 0.463, green: 0.463, blue: 0.463).opacity(0.2), lineWidth: 1)
-                                )
-                            
-                            Image(systemName: "trash")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(Color(red: 0.463, green: 0.463, blue: 0.463))
-                        }
+        VStack(spacing: 0) {
+            // Swipe down line
+            Rectangle()
+                .fill(Color(red: 0.787, green: 0.787, blue: 0.787))
+                .frame(width: 38, height: 5)
+                .cornerRadius(2.5)
+                .padding(.top, 16)
+            
+            HStack {
+                // Delete button
+                Button(action: {
+                    dismissModal()
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(Color(red: 0.894, green: 0.894, blue: 0.894))
+                            .frame(width: 48, height: 48)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color(red: 0.463, green: 0.463, blue: 0.463).opacity(0.2), lineWidth: 1)
+                            )
+                        
+                        Image(systemName: "trash")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(Color(red: 0.463, green: 0.463, blue: 0.463))
                     }
-                    .padding(.leading, 24)
-                    .position(x: 24 + 24, y: 80) // 24px od leve ivice + 24px (pola širine kruga)
-                    
-                    Spacer()
-                    
-                    // Empty space for balance
-                    Circle()
-                        .fill(Color.clear)
-                        .frame(width: 48, height: 48)
-                        .padding(.trailing, 24)
                 }
+                .padding(.leading, 24)
+                .padding(.top, 16) // Pozicioniraj gornju ivicu kruga na 16px od vrha
+                .offset(y: -24) // Kompenzuj za visinu kruga (48px/2 = 24px)
+                
+                Spacer()
+                
+                // Empty space for balance
+                Circle()
+                    .fill(Color.clear)
+                    .frame(width: 48, height: 48)
+                    .padding(.trailing, 24)
             }
         }
     }
