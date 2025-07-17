@@ -102,7 +102,7 @@ struct MilestonePopupView: View {
             }
             .background(Color(red: 0.929, green: 0.929, blue: 0.929))
             .clipShape(RoundedCorner(radius: 40, corners: [.topLeft, .topRight]))
-            .frame(height: photoData != nil ? 600 : 445)
+            .frame(height: photoData != nil ? 650 : 445) // Povećana visina kada postoji slika
             .padding(.top, 24)
             
             // Bottom buttons - fiksirana pozicija na dnu
@@ -217,35 +217,38 @@ struct MilestonePopupView: View {
             Text("Enter achievement")
                 .font(.custom("Inter_24pt-Regular", size: 14))
                 .foregroundColor(Color(red: 0.561, green: 0.561, blue: 0.561)) // #8F8F8F
-                .padding(.top, 8)
+                .padding(.top, 4) // Smanjen razmak sa 8 na 4
             
             // Show selected image if exists
             if let photoData = photoData, let uiImage = UIImage(data: photoData) {
                 VStack(spacing: 0) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: 160) // Povećana visina slike
-                        .clipped()
-                        .cornerRadius(12)
-                        .overlay(
-                            Button(action: {
-                                self.photoData = nil
-                                self.selectedPhoto = nil
-                            }) {
-                                Image("XIcon")
-                                    .resizable()
-                                    .frame(width: 24, height: 24)
-                                    .foregroundColor(.white)
-                                    .background(Color.black.opacity(0.5))
-                                    .clipShape(Circle())
-                            }
-                            .padding(8),
-                            alignment: .topTrailing
-                        )
+                    ZStack(alignment: .topTrailing) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(height: 200) // Povećana visina slike
+                            .clipped()
+                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.white, lineWidth: 8)
+                            )
+                        
+                        Button(action: {
+                            self.photoData = nil
+                            self.selectedPhoto = nil
+                        }) {
+                            Image("XIcon")
+                                .resizable()
+                                .frame(width: 24, height: 24)
+                                .foregroundColor(.white)
+                        }
+                        .padding(8)
+                    }
                 }
-                .padding(.top, 14) // 14px razmak od input-a
-                .padding(.bottom, 24) // 24px od dugmića
+                .rotationEffect(.degrees(-1)) // Nakrivljenje -1 stepen
+                .padding(.top, 14)
+                .padding(.bottom, 24)
             }
         }
         .padding(.horizontal, 24) // 24px od ivica ekrana
@@ -336,11 +339,15 @@ struct MilestonePopupView: View {
     }
     
     private func deleteMilestone() {
-        // Resetuj progressDay na prazan broj
+        // Potpuno resetuj progressDay na početno stanje
         progressDay.milestoneText = nil
         progressDay.milestonePhoto = nil
         progressDay.completed = false
         progressDay.flowerType = nil
+        
+        // Obriši progressDay iz Core Data
+        coreDataManager.deleteProgressDay(progressDay)
+        
         dismissModal()
     }
 }

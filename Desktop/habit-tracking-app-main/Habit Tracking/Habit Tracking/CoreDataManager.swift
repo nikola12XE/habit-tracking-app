@@ -88,6 +88,12 @@ class CoreDataManager: ObservableObject {
         save()
     }
     
+    func deleteProgressDay(_ progressDay: ProgressDay) {
+        let context = container.viewContext
+        context.delete(progressDay)
+        save()
+    }
+    
     func fetchProgressDays(for goal: Goal) -> [ProgressDay] {
         let request: NSFetchRequest<ProgressDay> = ProgressDay.fetchRequest()
         request.predicate = NSPredicate(format: "goal == %@", goal)
