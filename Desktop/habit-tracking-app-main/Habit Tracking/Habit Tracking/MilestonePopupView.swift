@@ -22,6 +22,7 @@ struct MilestonePopupView: View {
     @FocusState private var isInputFocused: Bool
     @GestureState private var dragOffset: CGFloat = 0
     @State private var keyboardHeight: CGFloat = 0
+    @State private var isKeyboardVisible: Bool = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -98,37 +99,45 @@ struct MilestonePopupView: View {
                 isInputFocused = false
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
+            isKeyboardVisible = true
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                keyboardHeight = keyboardFrame.height
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            isKeyboardVisible = false
+            keyboardHeight = 0
+        }
     }
     
     private var modalContent: some View {
         VStack(spacing: 0) {
-            // Main content area
-            VStack(spacing: 0) {
-                // Top section with delete button and line
-                topSection
-                
-                // Main content
-                VStack(spacing: 24) {
-                    trophySection
-                    inputSection
-                }
-                .padding(.horizontal, 0)
-                .offset(y: -16)
-                
-                Spacer()
+            // Top section with delete button and line
+            topSection
+            // Main content
+            VStack(spacing: 24) {
+                trophySection
+                inputSection
             }
-            .background(Color(red: 0.929, green: 0.929, blue: 0.929))
-            .clipShape(RoundedCorner(radius: 40, corners: [.topLeft, .topRight]))
-            .frame(height: photoData != nil ? 650 + (keyboardHeight > 0 && photoData != nil ? keyboardHeight : 0) : 445 + (keyboardHeight > 0 && photoData == nil ? keyboardHeight : 0))
-            .padding(.top, 24)
+            .padding(.horizontal, 0)
+            .offset(y: -16)
             
-            // Bottom buttons - sada u VStack-u
+            Spacer()
+            
+            // Bottom buttons - now part of the main VStack
             bottomButtons
-                .padding(.bottom, keyboardHeight > 0 ? 24 : 48)
+                .padding(.bottom, 32)
+                .offset(y: isKeyboardVisible ? -(keyboardHeight - 8) : 0) // 8px razmak iznad tastature
+                .animation(.easeInOut(duration: 0.3), value: isKeyboardVisible)
+                .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
         }
+        .background(Color(red: 0.929, green: 0.929, blue: 0.929))
+        .clipShape(RoundedCorner(radius: 40, corners: [.topLeft, .topRight]))
+        .frame(height: photoData != nil ? 650 + (keyboardHeight > 0 && photoData != nil ? keyboardHeight : 0) : 445 + (keyboardHeight > 0 && photoData == nil ? keyboardHeight : 0))
+        .padding(.top, 24)
         .animation(.easeInOut(duration: 0.3), value: photoData != nil)
         .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
-        .keyboardAdaptive(keyboardHeight: $keyboardHeight)
     }
     
     private var topSection: some View {
@@ -327,7 +336,6 @@ struct MilestonePopupView: View {
             }
         }
         .padding(.horizontal, 58)
-        .padding(.bottom, 32)
     }
     
     private func dateString(from date: Date) -> String {
