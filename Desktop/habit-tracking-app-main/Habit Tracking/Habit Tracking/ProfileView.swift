@@ -10,44 +10,105 @@ struct ProfileView: View {
     @State private var showLogoutAlert = false
     @State private var showDeleteAlert = false
     @State private var showGoalEdit = false
+    @State private var showMilestones = false
+    @State private var showPremium = false
+    @State private var showFAQ = false
+    @State private var showPrivacy = false
+    @State private var showTerms = false
+    @State private var showHelp = false
+    @State private var showSecondReminder = false
+    @State private var showReminderTime = false
+    @State private var showPlaySound = false
     
-    var body: some View {
-        NavigationView {
+        var body: some View {
+        VStack(spacing: 0) {
+            // Pull-down indicator
+            RoundedRectangle(cornerRadius: 2.5)
+                .fill(Color(red: 0.8, green: 0.8, blue: 0.8))
+                .frame(width: 36, height: 5)
+                .padding(.top, 8)
+            
+            // Profile header with avatar and edit button
+            HStack {
+                // Avatar
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
+                        .frame(width: 48, height: 48)
+                    
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                }
+                .allowsHitTesting(false)
+                
+                // Edit button
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
+                        .frame(width: 48, height: 48)
+                    
+                    Image(systemName: "pencil")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                }
+                .allowsHitTesting(false)
+                
+                Spacer()
+                
+                // Close button
+                Button(action: {
+                    appState.navigateTo(.main)
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
+                            .frame(width: 38, height: 38)
+                        
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                    }
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 20)
+            
+            // Name
+            Text("Nina Skrbic")
+                .font(.system(size: 24, weight: .semibold, design: .default))
+                .tracking(-0.96) // -4% letter spacing (24 * 0.04 = 0.96)
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 24)
+                .padding(.top, 12)
+            
+            // Scrollable content
             ScrollView {
-                VStack(spacing: DesignConstants.largeSpacing) {
-                    // Avatar and name
-                    avatarSection
+                VStack(spacing: 32) {
+                    // Account Details section
+                    accountDetailsSection
                     
-                    // Profile fields
-                    profileFieldsSection
-                    
-                    // Goal section
-                    goalSection
-                    
-                    // Notifications
+                    // Notifications section
                     notificationsSection
                     
-                    // Links
+                    // Links section
                     linksSection
-                    
-                    // Actions
-                    actionsSection
                 }
-                .padding(.horizontal, DesignConstants.largeSpacing)
-                .padding(.bottom, DesignConstants.extraLargeSpacing)
+                .padding(.horizontal, 24)
+                .padding(.top, 32)
             }
-            .background(DesignConstants.backgroundColor)
-            .navigationTitle("Profile")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        appState.navigateTo(.main)
-                    }
-                    .foregroundColor(DesignConstants.primaryColor)
-                }
-            }
+            
+            // Log Out button at bottom
+            logOutButton
         }
+        .background(Color(hex: "EDEDED"))
+        .clipShape(RoundedCorner(radius: 40, corners: [.topLeft, .topRight]))
+        .ignoresSafeArea()
+        .presentationDetents([.large])
+        .presentationDragIndicator(.hidden)
+        .presentationBackground(.clear)
         .onAppear {
             loadUserProfile()
         }
@@ -59,6 +120,364 @@ struct ProfileView: View {
                 }
             }
         }
+        .fullScreenCover(isPresented: $showGoalEdit) {
+            GoalEntryFlowView()
+        }
+        .sheet(isPresented: $showMilestones) {
+            MilestonesView()
+        }
+        .sheet(isPresented: $showPremium) {
+            PremiumView()
+        }
+        .sheet(isPresented: $showFAQ) {
+            FAQView()
+        }
+        .sheet(isPresented: $showPrivacy) {
+            PrivacyPolicyView()
+        }
+        .sheet(isPresented: $showTerms) {
+            TermsConditionsView()
+        }
+        .sheet(isPresented: $showHelp) {
+            HelpSupportView()
+        }
+        .sheet(isPresented: $showSecondReminder) {
+            SecondReminderView()
+        }
+        .sheet(isPresented: $showReminderTime) {
+            ReminderTimeView()
+        }
+        .sheet(isPresented: $showPlaySound) {
+            PlaySoundView()
+        }
+    }
+    
+    private var accountDetailsSection: some View {
+        VStack(spacing: 12) {
+            // Section title
+            Text("Account Details")
+                .font(.custom("Inter_24pt-SemiBold", size: 11))
+                .tracking(-0.44) // -4% letter spacing
+                .foregroundColor(Color(hex: "8F8F8F"))
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // Settings items
+            VStack(spacing: 0) {
+                // Edit Goal
+                Button(action: {
+                    showGoalEdit = true
+                }) {
+                    HStack {
+                        Text("Edit Goal")
+                            .font(.system(size: 17, weight: .regular))
+                            .foregroundColor(.black)
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 8) {
+                            Text("Grow Portfolio")
+                                .font(.system(size: 17, weight: .regular))
+                                .foregroundColor(.black)
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                        }
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 15)
+                    .background(Color(red: 0.95, green: 0.95, blue: 0.95))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
+                    )
+                }
+                
+                // See Milestones
+                Button(action: {
+                    showMilestones = true
+                }) {
+                    HStack {
+                        Text("See Milestones")
+                            .font(.system(size: 17, weight: .regular))
+                            .foregroundColor(.black)
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 8) {
+                            Text("5")
+                                .font(.system(size: 17, weight: .regular))
+                                .foregroundColor(.black)
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                        }
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 15)
+                    .background(Color(red: 0.95, green: 0.95, blue: 0.95))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
+                    )
+                }
+                
+                // Your Plan (Premium) with orange background and plus pattern
+                Button(action: {
+                    showPremium = true
+                }) {
+                    HStack {
+                        Text("Your Plan")
+                            .font(.system(size: 17, weight: .regular))
+                            .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 8) {
+                            Text("Premium")
+                                .font(.system(size: 17, weight: .regular))
+                                .foregroundColor(.white)
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 15)
+                    .background(
+                        ZStack {
+                            Color(red: 1.0, green: 0.6, blue: 0.0)
+                            
+                            // Plus pattern overlay
+                            HStack(spacing: 8) {
+                                ForEach(0..<20, id: \.self) { _ in
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 8))
+                                        .foregroundColor(.white.opacity(0.3))
+                                }
+                            }
+                        }
+                    )
+                    .cornerRadius(8)
+                }
+            }
+        }
+    }
+    
+    private var notificationsSection: some View {
+        VStack(spacing: 12) {
+            // Section title
+            Text("Notifications")
+                .font(.custom("Inter_24pt-SemiBold", size: 11))
+                .tracking(-0.44) // -4% letter spacing
+                .foregroundColor(Color(hex: "8F8F8F"))
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // Settings items
+            VStack(spacing: 0) {
+                // Second reminder
+                Button(action: {
+                    showSecondReminder = true
+                }) {
+                    HStack {
+                        Text("Second reminder")
+                            .font(.system(size: 17, weight: .regular))
+                            .foregroundColor(.black)
+                        
+                        Spacer()
+                        
+                        // Toggle switch
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(Color(red: 0.308, green: 0.608, blue: 1.0))
+                                .frame(width: 51, height: 31)
+                            
+                            Circle()
+                                .fill(.white)
+                                .frame(width: 27, height: 27)
+                                .offset(x: 10)
+                        }
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 15)
+                    .background(Color(red: 0.95, green: 0.95, blue: 0.95))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
+                    )
+                }
+                
+                // Reminder Time
+                Button(action: {
+                    showReminderTime = true
+                }) {
+                    HStack {
+                        Text("Reminder Time")
+                            .font(.system(size: 17, weight: .regular))
+                            .foregroundColor(.black)
+                        
+                        Spacer()
+                        
+                        Text("10:30 AM")
+                            .font(.system(size: 17, weight: .regular))
+                            .foregroundColor(.black)
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 15)
+                    .background(Color(red: 0.95, green: 0.95, blue: 0.95))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
+                    )
+                }
+                
+                // Play Sound
+                Button(action: {
+                    showPlaySound = true
+                }) {
+                    HStack {
+                        Text("Play Sound")
+                            .font(.system(size: 17, weight: .regular))
+                            .foregroundColor(.black)
+                        
+                        Spacer()
+                        
+                        // Toggle switch
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 15)
+                                .fill(Color(red: 0.308, green: 0.608, blue: 1.0))
+                                .frame(width: 51, height: 31)
+                            
+                            Circle()
+                                .fill(.white)
+                                .frame(width: 27, height: 27)
+                                .offset(x: 10)
+                        }
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 15)
+                    .background(Color(red: 0.95, green: 0.95, blue: 0.95))
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
+                    )
+                }
+            }
+        }
+    }
+    
+    private var linksSection: some View {
+        VStack(spacing: 0) {
+            // FAQ
+            Button(action: {
+                showFAQ = true
+            }) {
+                HStack {
+                    Text("FAQ")
+                        .font(.system(size: 17, weight: .regular))
+                        .foregroundColor(.black)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 15)
+            }
+            
+            // Privacy Policy
+            Button(action: {
+                showPrivacy = true
+            }) {
+                HStack {
+                    Text("Privacy Policy")
+                        .font(.system(size: 17, weight: .regular))
+                        .foregroundColor(.black)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 15)
+            }
+            
+            // Terms and Conditions
+            Button(action: {
+                showTerms = true
+            }) {
+                HStack {
+                    Text("Terms and Conditions")
+                        .font(.system(size: 17, weight: .regular))
+                        .foregroundColor(.black)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 15)
+            }
+            
+            // Help and Support
+            Button(action: {
+                showHelp = true
+            }) {
+                HStack {
+                    Text("Help and Support")
+                        .font(.system(size: 17, weight: .regular))
+                        .foregroundColor(.black)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 15)
+            }
+        }
+    }
+    
+    private var logOutButton: some View {
+        VStack(spacing: 16) {
+            Button(action: {
+                showLogoutAlert = true
+            }) {
+                Text("Log Out")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color(red: 0.9, green: 0.9, blue: 0.9), lineWidth: 1)
+                    )
+            }
+            .padding(.horizontal, 24)
+            
+            // Delete Account text
+            Text("Delete Account")
+                .font(.system(size: 17, weight: .regular))
+                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+        }
+        .padding(.bottom, 32)
         .alert("Log Out", isPresented: $showLogoutAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Log Out", role: .destructive) {
@@ -67,319 +486,247 @@ struct ProfileView: View {
         } message: {
             Text("Are you sure you want to log out?")
         }
-        .alert("Delete Account", isPresented: $showDeleteAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
-                deleteAccount()
-            }
-        } message: {
-            Text("This action cannot be undone. All your data will be permanently deleted.")
-        }
-        .fullScreenCover(isPresented: $showGoalEdit) {
-            GoalEntryFlowView()
-        }
-    }
-    
-    private var avatarSection: some View {
-        VStack(spacing: DesignConstants.mediumSpacing) {
-            PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                if let avatarData = userProfile?.avatar, let uiImage = UIImage(data: avatarData) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 100, height: 100)
-                        .clipShape(Circle())
-                        .overlay(
-                            Circle()
-                                .stroke(DesignConstants.primaryColor, lineWidth: 3)
-                        )
-                } else {
-                    Image(systemName: "person.circle.fill")
-                        .font(.system(size: 100))
-                        .foregroundColor(DesignConstants.primaryColor)
-                }
-            }
-            
-            Text(userProfile?.name ?? "User Name")
-                .font(DesignConstants.subtitleFont)
-                .fontWeight(.semibold)
-                .foregroundColor(DesignConstants.textColor)
-        }
-        .padding(.top, DesignConstants.largeSpacing)
-    }
-    
-    private var profileFieldsSection: some View {
-        VStack(spacing: DesignConstants.mediumSpacing) {
-            ProfileFieldView(
-                title: "Email Address",
-                value: userProfile?.email ?? "user@example.com",
-                isEditable: false
-            )
-            
-            ProfileFieldView(
-                title: "Your Plan",
-                value: userProfile?.plan == "free" ? "Free Plan" : "Premium Plan",
-                isEditable: false
-            )
-        }
-        .padding(DesignConstants.largeSpacing)
-        .background(Color.white)
-        .cornerRadius(DesignConstants.largeCornerRadius)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-    }
-    
-    private var goalSection: some View {
-        VStack(spacing: DesignConstants.mediumSpacing) {
-            HStack {
-                Text("Your Goal")
-                    .font(DesignConstants.subtitleFont)
-                    .fontWeight(.semibold)
-                    .foregroundColor(DesignConstants.textColor)
-                
-                Spacer()
-                
-                Button("Edit") {
-                    showGoalEdit = true
-                }
-                .font(DesignConstants.bodyFont)
-                .foregroundColor(DesignConstants.primaryColor)
-            }
-            
-            let goals = coreDataManager.fetchGoals()
-            if let goal = goals.first {
-                VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
-                    Text(goal.goalText ?? "No goal set")
-                        .font(DesignConstants.bodyFont)
-                        .foregroundColor(DesignConstants.textColor)
-                    
-                    if let nsNumbers = goal.selectedDays as? [NSNumber], !nsNumbers.isEmpty {
-                        let selectedDays = nsNumbers.map { $0.intValue }
-                        Text("Days: \(formatSelectedDays(selectedDays))")
-                            .font(DesignConstants.captionFont)
-                            .foregroundColor(DesignConstants.textColor.opacity(0.7))
-                    }
-                    
-                    if goal.reminderEnabled {
-                        Text("Reminder: \(formatReminderTime(goal.reminderTime))")
-                            .font(DesignConstants.captionFont)
-                            .foregroundColor(DesignConstants.textColor.opacity(0.7))
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(DesignConstants.mediumSpacing)
-                .background(DesignConstants.backgroundColor)
-                .cornerRadius(DesignConstants.mediumCornerRadius)
-            } else {
-                Text("No goal set yet")
-                    .font(DesignConstants.bodyFont)
-                    .foregroundColor(DesignConstants.textColor.opacity(0.7))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(DesignConstants.mediumSpacing)
-                    .background(DesignConstants.backgroundColor)
-                    .cornerRadius(DesignConstants.mediumCornerRadius)
-            }
-        }
-        .padding(DesignConstants.largeSpacing)
-        .background(Color.white)
-        .cornerRadius(DesignConstants.largeCornerRadius)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-    }
-    
-    private var notificationsSection: some View {
-        VStack(spacing: DesignConstants.mediumSpacing) {
-            HStack {
-                Text("Notifications")
-                    .font(DesignConstants.subtitleFont)
-                    .fontWeight(.semibold)
-                    .foregroundColor(DesignConstants.textColor)
-                
-                Spacer()
-            }
-            
-            VStack(spacing: DesignConstants.smallSpacing) {
-                Toggle("Send Reminder", isOn: Binding(
-                    get: { userProfile?.reminderEnabled ?? true },
-                    set: { newValue in
-                        userProfile?.reminderEnabled = newValue
-                        if let profile = userProfile {
-                            coreDataManager.updateUserProfile(profile)
-                        }
-                    }
-                ))
-                .font(DesignConstants.bodyFont)
-                
-                if userProfile?.reminderEnabled == true {
-                    DatePicker("Reminder Time", selection: Binding(
-                        get: { userProfile?.reminderTime ?? Date() },
-                        set: { newValue in
-                            userProfile?.reminderTime = newValue
-                            if let profile = userProfile {
-                                coreDataManager.updateUserProfile(profile)
-                            }
-                        }
-                    ), displayedComponents: .hourAndMinute)
-                    .font(DesignConstants.bodyFont)
-                }
-                
-                Toggle("Second reminder", isOn: Binding(
-                    get: { userProfile?.secondReminder ?? false },
-                    set: { newValue in
-                        userProfile?.secondReminder = newValue
-                        if let profile = userProfile {
-                            coreDataManager.updateUserProfile(profile)
-                        }
-                    }
-                ))
-                .font(DesignConstants.bodyFont)
-                
-                Toggle("Play sound", isOn: Binding(
-                    get: { userProfile?.playSound ?? true },
-                    set: { newValue in
-                        userProfile?.playSound = newValue
-                        if let profile = userProfile {
-                            coreDataManager.updateUserProfile(profile)
-                        }
-                    }
-                ))
-                .font(DesignConstants.bodyFont)
-            }
-        }
-        .padding(DesignConstants.largeSpacing)
-        .background(Color.white)
-        .cornerRadius(DesignConstants.largeCornerRadius)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-    }
-    
-    private var linksSection: some View {
-        VStack(spacing: DesignConstants.smallSpacing) {
-            ProfileLinkView(title: "Milestones", icon: "trophy.fill") {
-                // Navigate to milestones
-            }
-            
-            ProfileLinkView(title: "FAQ", icon: "questionmark.circle.fill") {
-                // Navigate to FAQ
-            }
-            
-            ProfileLinkView(title: "Privacy", icon: "lock.fill") {
-                // Navigate to Privacy
-            }
-            
-            ProfileLinkView(title: "Terms", icon: "doc.text.fill") {
-                // Navigate to Terms
-            }
-            
-            ProfileLinkView(title: "Support", icon: "message.fill") {
-                // Navigate to Support
-            }
-        }
-        .padding(DesignConstants.largeSpacing)
-        .background(Color.white)
-        .cornerRadius(DesignConstants.largeCornerRadius)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-    }
-    
-    private var actionsSection: some View {
-        VStack(spacing: DesignConstants.mediumSpacing) {
-            Button("Log Out") {
-                showLogoutAlert = true
-            }
-            .buttonStyle(SecondaryButtonStyle())
-            
-            Button("Delete Account") {
-                showDeleteAlert = true
-            }
-            .foregroundColor(DesignConstants.errorColor)
-            .font(DesignConstants.bodyFont)
-        }
     }
     
     private func loadUserProfile() {
-        userProfile = coreDataManager.fetchUserProfile()
-        
-        if userProfile == nil {
-            // Create default profile
-            userProfile = coreDataManager.createUserProfile(
-                email: "user@example.com",
-                name: "User Name"
-            )
-        }
-    }
-    
-    private func formatSelectedDays(_ days: [Int]) -> String {
-        let dayNames = ["M", "T", "W", "T", "F", "S", "S"]
-        return days.map { dayNames[$0] }.joined(separator: ", ")
-    }
-    
-    private func formatReminderTime(_ date: Date?) -> String {
-        guard let date = date else { return "Not set" }
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
+        // Load user profile logic
     }
     
     private func logout() {
-        appState.logout()
+        // Logout logic
+        appState.navigateTo(.splash)
     }
     
     private func deleteAccount() {
-        // Handle account deletion logic
-        appState.logout()
+        // Delete account logic
+        appState.navigateTo(.splash)
     }
 }
 
-struct ProfileFieldView: View {
-    let title: String
-    let value: String
-    let isEditable: Bool
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: DesignConstants.smallSpacing) {
-                Text(title)
-                    .font(DesignConstants.captionFont)
-                    .foregroundColor(DesignConstants.textColor.opacity(0.7))
-                
-                Text(value)
-                    .font(DesignConstants.bodyFont)
-                    .foregroundColor(DesignConstants.textColor)
-            }
-            
-            Spacer()
-            
-            if isEditable {
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(DesignConstants.textColor.opacity(0.5))
-            }
-        }
-    }
-}
+// MARK: - Supporting Views
 
-struct ProfileLinkView: View {
-    let title: String
-    let icon: String
-    let action: () -> Void
+struct MilestonesView: View {
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        Button(action: action) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundColor(DesignConstants.primaryColor)
-                    .frame(width: 24)
-                
-                Text(title)
-                    .font(DesignConstants.bodyFont)
-                    .foregroundColor(DesignConstants.textColor)
+        NavigationView {
+            VStack {
+                Text("Milestones")
+                    .font(.largeTitle)
+                    .padding()
                 
                 Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(DesignConstants.textColor.opacity(0.5))
+            }
+            .navigationTitle("Milestones")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
             }
         }
-        .padding(.vertical, DesignConstants.smallSpacing)
+    }
+}
+
+struct PremiumView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Premium")
+                    .font(.largeTitle)
+                    .padding()
+                
+                Spacer()
+            }
+            .navigationTitle("Premium")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct FAQView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("FAQ")
+                    .font(.largeTitle)
+                    .padding()
+                
+                Spacer()
+            }
+            .navigationTitle("FAQ")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct PrivacyPolicyView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Privacy Policy")
+                    .font(.largeTitle)
+                    .padding()
+                
+                Spacer()
+            }
+            .navigationTitle("Privacy Policy")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct TermsConditionsView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Terms and Conditions")
+                    .font(.largeTitle)
+                    .padding()
+                
+                Spacer()
+            }
+            .navigationTitle("Terms and Conditions")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct HelpSupportView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Help and Support")
+                    .font(.largeTitle)
+                    .padding()
+                
+                Spacer()
+            }
+            .navigationTitle("Help and Support")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct SecondReminderView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Second Reminder")
+                    .font(.largeTitle)
+                    .padding()
+                
+                Spacer()
+            }
+            .navigationTitle("Second Reminder")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct ReminderTimeView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Reminder Time")
+                    .font(.largeTitle)
+                    .padding()
+                
+                Spacer()
+            }
+            .navigationTitle("Reminder Time")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct PlaySoundView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            VStack {
+                Text("Play Sound")
+                    .font(.largeTitle)
+                    .padding()
+                
+                Spacer()
+            }
+            .navigationTitle("Play Sound")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 
