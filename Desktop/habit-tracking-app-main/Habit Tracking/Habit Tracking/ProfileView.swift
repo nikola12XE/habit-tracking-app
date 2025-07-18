@@ -31,24 +31,23 @@ struct ProfileView: View {
             // Profile header with avatar and edit button
             HStack {
                 // Avatar
-                ZStack {
-                    Circle()
-                        .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
-                        .frame(width: 48, height: 48)
-                    
-                    Image(systemName: "person.fill")
-                        .font(.system(size: 24))
-                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
-                }
+                Image("person.fill")
+                    .resizable()
+                    .frame(width: 52, height: 52)
+                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
                 .allowsHitTesting(false)
                 
                 // Edit button
                 ZStack {
                     Circle()
-                        .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
+                        .fill(Color(hex: "E5E5E5"))
                         .frame(width: 48, height: 48)
+                        .overlay(
+                            Circle()
+                                .stroke(Color(hex: "C9C9C9"), lineWidth: 1)
+                        )
                     
-                    Image(systemName: "pencil")
+                    Image("pencil")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
                 }
@@ -74,6 +73,7 @@ struct ProfileView: View {
             }
             .padding(.horizontal, 24)
             .padding(.top, 20)
+            .padding(.bottom, 24)
             
             // Name
             Text("Nina Skrbic")
@@ -82,7 +82,7 @@ struct ProfileView: View {
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 24)
-                .padding(.top, 12)
+                .padding(.top, -2)
             
             // Scrollable content
             ScrollView {
@@ -156,8 +156,8 @@ struct ProfileView: View {
         VStack(spacing: 12) {
             // Section title
             Text("Account Details")
-                .font(.custom("Inter_24pt-SemiBold", size: 11))
-                .tracking(-0.44) // -4% letter spacing
+                .font(.custom("Inter_24pt-SemiBold", size: 13))
+                .tracking(-0.26) // -2% letter spacing
                 .foregroundColor(Color(hex: "8F8F8F"))
                 .frame(maxWidth: .infinity, alignment: .leading)
             
@@ -169,14 +169,17 @@ struct ProfileView: View {
                 }) {
                     HStack {
                         Text("Edit Goal")
-                            .font(.system(size: 17, weight: .regular))
+                            .font(.custom("Inter_24pt-SemiBold", size: 15))
+                            .fontWeight(.semibold)
+                            .tracking(-0.3) // -2% letter spacing
                             .foregroundColor(.black)
                         
                         Spacer()
                         
                         HStack(spacing: 8) {
                             Text("Grow Portfolio")
-                                .font(.system(size: 17, weight: .regular))
+                                .font(.custom("Inter_24pt-SemiBold", size: 15))
+                                .tracking(-0.3) // -2% letter spacing
                                 .foregroundColor(.black)
                             
                             Image(systemName: "chevron.right")
@@ -184,12 +187,12 @@ struct ProfileView: View {
                                 .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
                         }
                     }
+                    .frame(height: 48)
                     .padding(.horizontal, 18)
-                    .padding(.vertical, 15)
-                    .background(Color(red: 0.95, green: 0.95, blue: 0.95))
-                    .cornerRadius(8)
+                    .background(Color(hex: "E5E5E5"))
+                    .clipShape(RoundedCorner(radius: 8, corners: [.topLeft, .topRight]))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedCorner(radius: 8, corners: [.topLeft, .topRight])
                             .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
                     )
                 }
@@ -200,14 +203,17 @@ struct ProfileView: View {
                 }) {
                     HStack {
                         Text("See Milestones")
-                            .font(.system(size: 17, weight: .regular))
+                            .font(.custom("Inter_24pt-SemiBold", size: 15))
+                            .fontWeight(.semibold)
+                            .tracking(-0.3) // -2% letter spacing
                             .foregroundColor(.black)
                         
                         Spacer()
                         
                         HStack(spacing: 8) {
                             Text("5")
-                                .font(.system(size: 17, weight: .regular))
+                                .font(.custom("Inter_24pt-SemiBold", size: 15))
+                                .tracking(-0.3) // -2% letter spacing
                                 .foregroundColor(.black)
                             
                             Image(systemName: "chevron.right")
@@ -215,12 +221,12 @@ struct ProfileView: View {
                                 .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
                         }
                     }
+                    .frame(height: 48)
                     .padding(.horizontal, 18)
-                    .padding(.vertical, 15)
-                    .background(Color(red: 0.95, green: 0.95, blue: 0.95))
-                    .cornerRadius(8)
+                    .background(Color(hex: "E5E5E5"))
+                    .cornerRadius(0)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: 0)
                             .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
                     )
                 }
@@ -231,14 +237,17 @@ struct ProfileView: View {
                 }) {
                     HStack {
                         Text("Your Plan")
-                            .font(.system(size: 17, weight: .regular))
+                            .font(.custom("Inter_24pt-Bold", size: 15))
+                            .fontWeight(.bold)
+                            .tracking(-0.3) // -2% letter spacing
                             .foregroundColor(.white)
                         
                         Spacer()
                         
                         HStack(spacing: 8) {
                             Text("Premium")
-                                .font(.system(size: 17, weight: .regular))
+                                .font(.custom("Inter_24pt-Bold", size: 15))
+                                .tracking(-0.3) // -2% letter spacing
                                 .foregroundColor(.white)
                             
                             Image(systemName: "chevron.right")
@@ -246,8 +255,8 @@ struct ProfileView: View {
                                 .foregroundColor(.white)
                         }
                     }
+                    .frame(height: 48)
                     .padding(.horizontal, 18)
-                    .padding(.vertical, 15)
                     .background(
                         ZStack {
                             Color(red: 1.0, green: 0.6, blue: 0.0)
@@ -262,7 +271,7 @@ struct ProfileView: View {
                             }
                         }
                     )
-                    .cornerRadius(8)
+                    .clipShape(RoundedCorner(radius: 8, corners: [.bottomLeft, .bottomRight]))
                 }
             }
         }
@@ -272,8 +281,8 @@ struct ProfileView: View {
         VStack(spacing: 12) {
             // Section title
             Text("Notifications")
-                .font(.custom("Inter_24pt-SemiBold", size: 11))
-                .tracking(-0.44) // -4% letter spacing
+                .font(.custom("Inter_24pt-SemiBold", size: 13))
+                .tracking(-0.26) // -2% letter spacing
                 .foregroundColor(Color(hex: "8F8F8F"))
                 .frame(maxWidth: .infinity, alignment: .leading)
             
@@ -285,7 +294,9 @@ struct ProfileView: View {
                 }) {
                     HStack {
                         Text("Second reminder")
-                            .font(.system(size: 17, weight: .regular))
+                            .font(.custom("Inter_24pt-SemiBold", size: 15))
+                            .fontWeight(.semibold)
+                            .tracking(-0.3) // -2% letter spacing
                             .foregroundColor(.black)
                         
                         Spacer()
@@ -302,12 +313,12 @@ struct ProfileView: View {
                                 .offset(x: 10)
                         }
                     }
+                    .frame(height: 48)
                     .padding(.horizontal, 18)
-                    .padding(.vertical, 15)
-                    .background(Color(red: 0.95, green: 0.95, blue: 0.95))
-                    .cornerRadius(8)
+                    .background(Color(hex: "E5E5E5"))
+                    .clipShape(RoundedCorner(radius: 8, corners: [.topLeft, .topRight]))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedCorner(radius: 8, corners: [.topLeft, .topRight])
                             .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
                     )
                 }
@@ -318,21 +329,24 @@ struct ProfileView: View {
                 }) {
                     HStack {
                         Text("Reminder Time")
-                            .font(.system(size: 17, weight: .regular))
+                            .font(.custom("Inter_24pt-SemiBold", size: 15))
+                            .fontWeight(.semibold)
+                            .tracking(-0.3) // -2% letter spacing
                             .foregroundColor(.black)
                         
                         Spacer()
                         
                         Text("10:30 AM")
-                            .font(.system(size: 17, weight: .regular))
+                            .font(.custom("Inter_24pt-SemiBold", size: 15))
+                            .tracking(-0.3) // -2% letter spacing
                             .foregroundColor(.black)
                     }
+                    .frame(height: 48)
                     .padding(.horizontal, 18)
-                    .padding(.vertical, 15)
-                    .background(Color(red: 0.95, green: 0.95, blue: 0.95))
-                    .cornerRadius(8)
+                    .background(Color(hex: "E5E5E5"))
+                    .cornerRadius(0)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: 0)
                             .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
                     )
                 }
@@ -343,7 +357,9 @@ struct ProfileView: View {
                 }) {
                     HStack {
                         Text("Play Sound")
-                            .font(.system(size: 17, weight: .regular))
+                            .font(.custom("Inter_24pt-SemiBold", size: 15))
+                            .fontWeight(.semibold)
+                            .tracking(-0.3) // -2% letter spacing
                             .foregroundColor(.black)
                         
                         Spacer()
@@ -360,12 +376,12 @@ struct ProfileView: View {
                                 .offset(x: 10)
                         }
                     }
+                    .frame(height: 48)
                     .padding(.horizontal, 18)
-                    .padding(.vertical, 15)
-                    .background(Color(red: 0.95, green: 0.95, blue: 0.95))
-                    .cornerRadius(8)
+                    .background(Color(hex: "E5E5E5"))
+                    .clipShape(RoundedCorner(radius: 8, corners: [.bottomLeft, .bottomRight]))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedCorner(radius: 8, corners: [.bottomLeft, .bottomRight])
                             .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
                     )
                 }
@@ -381,7 +397,9 @@ struct ProfileView: View {
             }) {
                 HStack {
                     Text("FAQ")
-                        .font(.system(size: 17, weight: .regular))
+                        .font(.custom("Inter_24pt-SemiBold", size: 15))
+                        .fontWeight(.semibold)
+                        .tracking(-0.3) // -2% letter spacing
                         .foregroundColor(.black)
                     
                     Spacer()
@@ -400,7 +418,9 @@ struct ProfileView: View {
             }) {
                 HStack {
                     Text("Privacy Policy")
-                        .font(.system(size: 17, weight: .regular))
+                        .font(.custom("Inter_24pt-SemiBold", size: 15))
+                        .fontWeight(.semibold)
+                        .tracking(-0.3) // -2% letter spacing
                         .foregroundColor(.black)
                     
                     Spacer()
@@ -419,7 +439,9 @@ struct ProfileView: View {
             }) {
                 HStack {
                     Text("Terms and Conditions")
-                        .font(.system(size: 17, weight: .regular))
+                        .font(.custom("Inter_24pt-SemiBold", size: 15))
+                        .fontWeight(.semibold)
+                        .tracking(-0.3) // -2% letter spacing
                         .foregroundColor(.black)
                     
                     Spacer()
@@ -438,7 +460,9 @@ struct ProfileView: View {
             }) {
                 HStack {
                     Text("Help and Support")
-                        .font(.system(size: 17, weight: .regular))
+                        .font(.custom("Inter_24pt-SemiBold", size: 15))
+                        .fontWeight(.semibold)
+                        .tracking(-0.3) // -2% letter spacing
                         .foregroundColor(.black)
                     
                     Spacer()
