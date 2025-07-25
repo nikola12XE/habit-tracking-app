@@ -6,6 +6,7 @@ struct LoginView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var showForgotPassword = false
+    @State private var keyboardHeight: CGFloat = 0
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -94,12 +95,26 @@ struct LoginView: View {
                 }
                 Spacer()
             }
-            .padding(.bottom, 32)
+            .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 32)
+            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                keyboardHeight = keyboardFrame.height
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardHeight = 0
+        }
+        .ignoresSafeArea(.keyboard)
+        .onTapGesture {
+            UIApplication.shared.endEditing()
         }
         .fullScreenCover(isPresented: $showForgotPassword) {
             ForgotPasswordView()
         }
     }
+    
 }
 
 // 2. SIGN UP VIEW
@@ -109,6 +124,7 @@ struct SignUpView: View {
     @State private var lastName = ""
     @State private var email = ""
     @State private var password = ""
+    @State private var keyboardHeight: CGFloat = 0
     var body: some View {
         ZStack(alignment: .bottom) {
             Color(red: 0.93, green: 0.93, blue: 0.93).ignoresSafeArea()
@@ -161,10 +177,10 @@ struct SignUpView: View {
                     Spacer()
                 }
                 .padding(.top, 0)
-                // Don’t have account
+                // Don't have account
                 HStack(spacing: 6) {
                     Spacer()
-                    Text("Don’t have Account?")
+                    Text("Don't have Account?")
                         .font(.system(size: 15, weight: .medium))
                         .kerning(-0.3)
                         .foregroundColor(Color(hex: "8F8F8F"))
@@ -190,9 +206,23 @@ struct SignUpView: View {
                 }
                 Spacer()
             }
-            .padding(.bottom, 32)
+            .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 32)
+            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                keyboardHeight = keyboardFrame.height
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardHeight = 0
+        }
+        .ignoresSafeArea(.keyboard)
+        .onTapGesture {
+            UIApplication.shared.endEditing()
         }
     }
+    
 }
 
 // Custom input field for consistent style
@@ -252,6 +282,7 @@ struct ForgotPasswordView: View {
     @Environment(\.dismiss) var dismiss
     @State private var email = ""
     @State private var showReset = false
+    @State private var keyboardHeight: CGFloat = 0
     var body: some View {
         ZStack(alignment: .bottom) {
             Color(red: 0.93, green: 0.93, blue: 0.93).ignoresSafeArea()
@@ -316,12 +347,27 @@ struct ForgotPasswordView: View {
                     .background(Color.black)
                     .cornerRadius(100)
             }
-            .padding(.bottom, 32)
+            .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 32)
+            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                keyboardHeight = keyboardFrame.height
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardHeight = 0
+        }
+        .ignoresSafeArea(.keyboard)
+        .onTapGesture {
+            UIApplication.shared.endEditing()
         }
         .fullScreenCover(isPresented: $showReset) {
             ResetPasswordView()
         }
     }
+    
+
 }
 
 // 4. RESET PASSWORD VIEW
@@ -329,6 +375,7 @@ struct ResetPasswordView: View {
     @Environment(\.dismiss) var dismiss
     @State private var newPassword = ""
     @State private var confirmPassword = ""
+    @State private var keyboardHeight: CGFloat = 0
     var body: some View {
         ZStack(alignment: .bottom) {
             Color(red: 0.93, green: 0.93, blue: 0.93).ignoresSafeArea()
@@ -366,8 +413,8 @@ struct ResetPasswordView: View {
                 .padding(.leading, 80)
                 Spacer().frame(height: 32)
                 VStack(alignment: .leading, spacing: 18) {
-                    CustomInputField(label: "New Password", text: $newPassword, placeholder: "Enter new password", isSecure: true)
-                    CustomInputField(label: "Confirm Password", text: $confirmPassword, placeholder: "Confirm password", isSecure: true)
+                    CustomInputField(label: "New Password", text: $newPassword, placeholder: "Enter your new password", isSecure: true)
+                    CustomInputField(label: "Confirm Password", text: $confirmPassword, placeholder: "Confirm your password", isSecure: true)
                 }
                 .padding(.horizontal, 24)
                 Spacer()
@@ -380,9 +427,23 @@ struct ResetPasswordView: View {
                     .background(Color.black)
                     .cornerRadius(100)
             }
-            .padding(.bottom, 32)
+            .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 32)
+            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                keyboardHeight = keyboardFrame.height
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardHeight = 0
+        }
+        .ignoresSafeArea(.keyboard)
+        .onTapGesture {
+            UIApplication.shared.endEditing()
         }
     }
+    
 }
 
 struct CustomTextFieldStyle: TextFieldStyle {
@@ -392,6 +453,13 @@ struct CustomTextFieldStyle: TextFieldStyle {
             .background(Color.white)
             .cornerRadius(DesignConstants.mediumCornerRadius)
             .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+    }
+}
+
+// Extension to hide keyboard
+extension UIApplication {
+    func endEditing() {
+        sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 
