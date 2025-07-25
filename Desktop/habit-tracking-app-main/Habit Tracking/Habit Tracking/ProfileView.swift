@@ -303,14 +303,14 @@ struct ProfileView: View {
                         
                         // Toggle switch
                         ZStack {
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(Color(red: 0.308, green: 0.608, blue: 1.0))
-                                .frame(width: 51, height: 31)
+                            RoundedRectangle(cornerRadius: 40)
+                                .fill(Color(hex: "4F9BFF"))
+                                .frame(width: 60, height: 30)
                             
-                            Circle()
+                            RoundedRectangle(cornerRadius: 40)
                                 .fill(.white)
-                                .frame(width: 27, height: 27)
-                                .offset(x: 10)
+                                .frame(width: 33, height: 24)
+                                .offset(x: 10.5)
                         }
                     }
                     .frame(height: 48)
@@ -366,14 +366,14 @@ struct ProfileView: View {
                         
                         // Toggle switch
                         ZStack {
-                            RoundedRectangle(cornerRadius: 15)
-                                .fill(Color(red: 0.308, green: 0.608, blue: 1.0))
-                                .frame(width: 51, height: 31)
+                            RoundedRectangle(cornerRadius: 40)
+                                .fill(Color(hex: "4F9BFF"))
+                                .frame(width: 60, height: 30)
                             
-                            Circle()
+                            RoundedRectangle(cornerRadius: 40)
                                 .fill(.white)
-                                .frame(width: 27, height: 27)
-                                .offset(x: 10)
+                                .frame(width: 33, height: 24)
+                                .offset(x: 10.5)
                         }
                     }
                     .frame(height: 48)
