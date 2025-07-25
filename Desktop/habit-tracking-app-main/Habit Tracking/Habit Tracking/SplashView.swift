@@ -80,7 +80,7 @@ struct SplashView: View {
                     animateWaveAndNavigate(to: .signUp)
                 }) {
                     Text("Sign Up")
-                            .font(.custom("Inter_28pt-Bold", size: 16))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
@@ -92,7 +92,7 @@ struct SplashView: View {
                     animateWaveAndNavigate(to: .goalEntry)
                 }) {
                     Text("Set your Goal")
-                            .font(.custom("Inter_28pt-Bold", size: 16))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)

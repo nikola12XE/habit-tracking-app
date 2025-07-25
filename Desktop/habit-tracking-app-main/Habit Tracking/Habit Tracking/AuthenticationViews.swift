@@ -13,16 +13,17 @@ struct LoginView: View {
             VStack(spacing: 0) {
                 Spacer().frame(height: 90)
                 // Back arrow and title in a row
-                HStack(alignment: .center, spacing: 24) {
+                HStack(alignment: .firstTextBaseline, spacing: 24) {
                     Button(action: { appState.navigateTo(.splash) }) {
                         Image("back_arrow") // Asset: back_arrow
                             .resizable()
                             .frame(width: 32, height: 32)
+                            .alignmentGuide(.firstTextBaseline) { d in d[.bottom] + 12 }
                     }
                     Text("LOG IN")
                         .font(Font.custom("Thunder-BoldLC", size: 82))
                         .foregroundColor(.black)
-                        .frame(height: 62, alignment: .bottom)
+                        .alignmentGuide(.firstTextBaseline) { d in d[.firstTextBaseline] }
                     Spacer()
                 }
                 .padding(.leading, 24)
@@ -36,7 +37,8 @@ struct LoginView: View {
                     HStack {
                         Spacer()
                         Button("Forgot Password?") { showForgotPassword = true }
-                            .font(Font.custom("Inter-Regular", size: 16))
+                            .font(.system(size: 15, weight: .medium))
+                            .kerning(-0.3)
                             .foregroundColor(.black)
                     }
                 }
@@ -51,8 +53,8 @@ struct LoginView: View {
                                 .resizable()
                                 .frame(width: 26, height: 26)
                             Text("Continue with Google")
-                                .font(Font.custom("Inter-SemiBold", size: 14))
-                                .kerning(-0.28) // -2% letter spacing
+                                .font(.system(size: 15, weight: .semibold))
+                                .kerning(-0.6) // -4% letter spacing
                                 .foregroundColor(.black)
                         }
                         .frame(width: 270, height: 62)
@@ -67,10 +69,12 @@ struct LoginView: View {
                 HStack(spacing: 6) {
                     Spacer()
                     Text("Already have Account?")
-                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
-                        .font(Font.custom("Inter-Regular", size: 16))
+                        .font(.system(size: 15, weight: .medium))
+                        .kerning(-0.3)
+                        .foregroundColor(Color(hex: "8F8F8F"))
                     Button("Sign Up") { appState.navigateTo(.signUp) }
-                        .font(Font.custom("Inter-Medium", size: 16))
+                        .font(.system(size: 15, weight: .medium))
+                        .kerning(-0.3)
                         .foregroundColor(.black)
                     Spacer()
                 }
@@ -82,7 +86,7 @@ struct LoginView: View {
                 Spacer()
                 Button(action: { /* Log in logic */ }) {
                     Text("Log In")
-                        .font(Font.custom("Inter-SemiBold", size: 20))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                         .frame(width: 200, height: 62)
                         .background(Color.black)
@@ -111,16 +115,17 @@ struct SignUpView: View {
             VStack(spacing: 0) {
                 Spacer().frame(height: 90)
                 // Back arrow and title in a row
-                HStack(alignment: .center, spacing: 24) {
+                HStack(alignment: .firstTextBaseline, spacing: 24) {
                     Button(action: { appState.navigateTo(.splash) }) {
                         Image("back_arrow")
                             .resizable()
                             .frame(width: 32, height: 32)
+                            .alignmentGuide(.firstTextBaseline) { d in d[.bottom] + 12 }
                     }
                     Text("SIGN UP")
                         .font(Font.custom("Thunder-BoldLC", size: 82))
                         .foregroundColor(.black)
-                        .frame(height: 62, alignment: .bottom)
+                        .alignmentGuide(.firstTextBaseline) { d in d[.firstTextBaseline] }
                     Spacer()
                 }
                 .padding(.leading, 24)
@@ -144,8 +149,8 @@ struct SignUpView: View {
                                 .resizable()
                                 .frame(width: 26, height: 26)
                             Text("Continue with Google")
-                                .font(Font.custom("Inter-SemiBold", size: 14))
-                                .kerning(-0.28) // -2% letter spacing
+                                .font(.system(size: 15, weight: .semibold))
+                                .kerning(-0.6) // -4% letter spacing
                                 .foregroundColor(.black)
                         }
                         .frame(width: 270, height: 62)
@@ -160,10 +165,12 @@ struct SignUpView: View {
                 HStack(spacing: 6) {
                     Spacer()
                     Text("Don’t have Account?")
+                        .font(.system(size: 15, weight: .medium))
+                        .kerning(-0.3)
                         .foregroundColor(Color(hex: "8F8F8F"))
-                        .font(Font.custom("Inter-Regular", size: 16))
                     Button("Log In") { appState.navigateTo(.login) }
-                        .font(Font.custom("Inter-Medium", size: 16))
+                        .font(.system(size: 15, weight: .medium))
+                        .kerning(-0.3)
                         .foregroundColor(.black)
                     Spacer()
                 }
@@ -175,7 +182,7 @@ struct SignUpView: View {
                 Spacer()
                 Button(action: { /* Sign up logic */ }) {
                     Text("Sign Up")
-                        .font(Font.custom("Inter-SemiBold", size: 20))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                         .frame(width: 200, height: 62)
                         .background(Color.black)
@@ -216,7 +223,7 @@ struct CustomInputField: View {
                     SecureField("", text: $text)
                         .padding(.horizontal, 16)
                         .font(Font.custom("Inter-SemiBold", size: 16))
-                        .foregroundColor(Color(hex: "8F8F8F"))
+                        .foregroundColor(Color(hex: "0C0C0C"))
                 }
             } else {
                 ZStack(alignment: .leading) {
@@ -233,7 +240,7 @@ struct CustomInputField: View {
                     TextField("", text: $text)
                         .padding(.horizontal, 16)
                         .font(Font.custom("Inter-SemiBold", size: 16))
-                        .foregroundColor(Color(hex: "8F8F8F"))
+                        .foregroundColor(Color(hex: "0C0C0C"))
                 }
             }
         }
@@ -250,50 +257,60 @@ struct ForgotPasswordView: View {
             Color(red: 0.93, green: 0.93, blue: 0.93).ignoresSafeArea()
             VStack(spacing: 0) {
                 Spacer().frame(height: 90)
-                HStack(alignment: .center, spacing: 24) {
+                HStack(alignment: .firstTextBaseline, spacing: 24) {
                     Button(action: { dismiss() }) {
                         Image("back_arrow")
                             .resizable()
                             .frame(width: 32, height: 32)
+                            .alignmentGuide(.firstTextBaseline) { d in d[.bottom] + 12 }
                     }
-                    Text("FORGOT PASSWORD")
-                        .font(Font.custom("Thunder-BoldLC", size: 82))
-                        .foregroundColor(.black)
-                        .frame(height: 62, alignment: .bottom)
-                    Spacer()
+                    HStack {
+                        Text("FORGOT\nPASSWORD")
+                            .font(Font.custom("Thunder-BoldLC", size: 82))
+                            .foregroundColor(.black)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .alignmentGuide(.firstTextBaseline) { d in d[.firstTextBaseline] }
+                        Spacer()
+                    }
                 }
                 .padding(.leading, 24)
-                .frame(height: 62)
-                Spacer().frame(height: 42)
+                .frame(height: 120)
+                Spacer().frame(height: 24)
                 HStack {
-                    Text("Enter your email and we will send you email with verification link")
+                    Text("Enter your email and we will send\nyou email with verification link")
                         .font(Font.custom("Inter-Regular", size: 16))
                         .foregroundColor(Color(hex: "8F8F8F"))
-                        .padding(.leading, 24)
                         .lineLimit(2)
+                        .multilineTextAlignment(.leading)
                     Spacer()
                 }
+                .padding(.leading, 80)
                 Spacer().frame(height: 32)
                 VStack(alignment: .leading, spacing: 18) {
                     CustomInputField(label: "Email", text: $email, placeholder: "Enter your email")
                 }
                 .padding(.horizontal, 24)
-                Spacer().frame(height: 42)
-                HStack {
-                    Text("Didn’t get a code?")
+                Spacer().frame(height: 20)
+                HStack(spacing: 6) {
+                    Spacer()
+                    Text("Didn't get a code?")
+                        .font(.system(size: 15, weight: .medium))
+                        .kerning(-0.3)
                         .foregroundColor(Color(hex: "8F8F8F"))
-                        .font(Font.custom("Inter-Regular", size: 16))
                     Button("Resend") { /* resend logic */ }
-                        .font(Font.custom("Inter-Medium", size: 16))
+                        .font(.system(size: 15, weight: .medium))
+                        .kerning(-0.3)
                         .foregroundColor(.black)
+                    Spacer()
                 }
-                .padding(.top, 16)
                 .padding(.bottom, 32)
                 Spacer()
             }
             Button(action: { showReset = true }) {
                 Text("Continue")
-                    .font(Font.custom("Inter-SemiBold", size: 20))
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 200, height: 62)
                     .background(Color.black)
@@ -317,28 +334,36 @@ struct ResetPasswordView: View {
             Color(red: 0.93, green: 0.93, blue: 0.93).ignoresSafeArea()
             VStack(spacing: 0) {
                 Spacer().frame(height: 90)
-                HStack(alignment: .center, spacing: 24) {
+                HStack(alignment: .firstTextBaseline, spacing: 24) {
                     Button(action: { dismiss() }) {
                         Image("back_arrow")
                             .resizable()
                             .frame(width: 32, height: 32)
+                            .alignmentGuide(.firstTextBaseline) { d in d[.bottom] + 12 }
                     }
-                    Text("RESET PASSWORD")
-                        .font(Font.custom("Thunder-BoldLC", size: 82))
-                        .foregroundColor(.black)
-                        .frame(height: 62, alignment: .bottom)
-                    Spacer()
+                    HStack {
+                        Text("RESET\nPASSWORD")
+                            .font(Font.custom("Thunder-BoldLC", size: 82))
+                            .foregroundColor(.black)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .alignmentGuide(.firstTextBaseline) { d in d[.firstTextBaseline] }
+                        Spacer()
+                    }
                 }
                 .padding(.leading, 24)
-                .frame(height: 62)
-                Spacer().frame(height: 42)
+                .frame(height: 120)
+                Spacer().frame(height: 20)
                 HStack {
                     Text("Enter your new password")
                         .font(Font.custom("Inter-Regular", size: 16))
                         .foregroundColor(Color(hex: "8F8F8F"))
-                        .padding(.leading, 24)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
                     Spacer()
                 }
+                .padding(.leading, 80)
                 Spacer().frame(height: 32)
                 VStack(alignment: .leading, spacing: 18) {
                     CustomInputField(label: "New Password", text: $newPassword, placeholder: "Enter new password", isSecure: true)
@@ -347,9 +372,9 @@ struct ResetPasswordView: View {
                 .padding(.horizontal, 24)
                 Spacer()
             }
-            Button(action: { /* Reset logic */ }) {
-                Text("Continue")
-                    .font(Font.custom("Inter-SemiBold", size: 20))
+            Button(action: { /* Reset password logic */ }) {
+                Text("Reset Password")
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white)
                     .frame(width: 200, height: 62)
                     .background(Color.black)
