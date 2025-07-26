@@ -34,6 +34,8 @@ struct PremiumProfileView: View {
     @State private var lastName = "Skrbic"
     @State private var currentGoalText = "Grow Portfolio" // Default text
     @State private var profileImageData: Data?
+    @State private var showMilestoneEdit = false
+    @State private var selectedMilestone: ProgressDay?
     @State private var dragOffset: CGFloat = 0
     @State private var showDeleteAccount = false
     @State private var thresholdReached = false
@@ -233,7 +235,15 @@ struct PremiumProfileView: View {
             EditGoalView(showGoalEdit: $showGoalEdit, currentGoalText: $currentGoalText)
         }
         .sheet(isPresented: $showMilestones) {
-            MilestonesView()
+            MilestonesView(onEditMilestone: { milestone in
+                // Close milestones sheet and open milestone edit
+                showMilestones = false
+                selectedMilestone = milestone
+                // Small delay to ensure milestones sheet is closed before opening edit
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    showMilestoneEdit = true
+                }
+            })
         }
         .sheet(isPresented: $showPremium) {
             PremiumView()
@@ -261,6 +271,15 @@ struct PremiumProfileView: View {
         }
         .sheet(isPresented: $showEditProfile) {
             EditProfileView(firstName: $firstName, lastName: $lastName, profileImageData: $profileImageData, userProfile: userProfile, coreDataManager: coreDataManager)
+        }
+        .sheet(isPresented: $showMilestoneEdit) {
+            if let milestone = selectedMilestone {
+                MilestonePopupView(progressDay: milestone, isPresented: $showMilestoneEdit)
+                    .onDisappear {
+                        // Reload milestone count when edit is complete
+                        loadMilestoneCount()
+                    }
+            }
         }
     }
     
@@ -781,8 +800,7 @@ struct MilestonesView: View {
     @State private var milestones: [ProgressDay] = []
     @State private var currentGoal: Goal?
     @State private var sheetDragOffset: CGFloat = 0
-    @State private var selectedMilestone: ProgressDay?
-    @State private var showMilestoneEdit = false
+    let onEditMilestone: (ProgressDay) -> Void
     
     var body: some View {
         VStack(spacing: 0) {
@@ -792,8 +810,8 @@ struct MilestonesView: View {
                 RoundedRectangle(cornerRadius: 2.5)
                     .fill(Color(red: 0.8, green: 0.8, blue: 0.8))
                     .frame(width: 36, height: 5)
-                    .padding(.top, 16)
-                    .padding(.bottom, 20)
+                    .padding(.top, 24)
+                    .padding(.bottom, 24)
                 
                 // Title with trophy icon and close button
                 HStack {
@@ -806,8 +824,7 @@ struct MilestonesView: View {
                             .frame(width: 24, height: 24)
                         
                         Text("\(milestones.count) Milestones")
-                            .font(.custom("Inter_24pt-SemiBold", size: 20))
-                            .fontWeight(.semibold)
+                            .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(.black)
                     }
                     
@@ -884,8 +901,7 @@ struct MilestonesView: View {
                     LazyVStack(spacing: 16) {
                         ForEach(Array(milestones.enumerated()), id: \.element.id) { index, milestone in
                             MilestoneCardView(milestone: milestone, index: index) {
-                                selectedMilestone = milestone
-                                showMilestoneEdit = true
+                                onEditMilestone(milestone)
                             }
                         }
                         
@@ -900,21 +916,13 @@ struct MilestonesView: View {
         }
         .background(Color(hex: "EDEDED"))
         .clipShape(RoundedCorner(radius: 40, corners: [.topLeft, .topRight]))
-        .presentationDetents([.large])
+        .presentationDetents([.fraction(1.0)])
         .presentationDragIndicator(.hidden)
         .presentationBackground(.clear)
         .offset(y: sheetDragOffset)
+        .ignoresSafeArea(.container, edges: .bottom)
         .onAppear {
             loadMilestones()
-        }
-        .sheet(isPresented: $showMilestoneEdit) {
-            if let milestone = selectedMilestone {
-                MilestonePopupView(progressDay: milestone, isPresented: $showMilestoneEdit)
-                    .onDisappear {
-                        // Reload milestones when edit sheet is dismissed
-                        loadMilestones()
-                    }
-            }
         }
     }
     
@@ -995,10 +1003,11 @@ struct MilestoneCardView: View {
                     Button(action: {
                         onEdit()
                     }) {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white.opacity(0.7))
+                        Image("edit")
+                            .resizable()
+                            .scaledToFit()
                             .frame(width: 24, height: 24)
+                            .foregroundColor(.white.opacity(0.7))
                     }
                 }
                 .padding(.top, 16)
@@ -1017,8 +1026,7 @@ struct MilestoneCardView: View {
                         // Text (if exists)
                         if hasText, let milestoneText = milestone.milestoneText {
                             Text(milestoneText)
-                                .font(.custom("Inter_24pt-Bold", size: 16))
-                                .fontWeight(.bold)
+                                .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(.white)
                                 .lineLimit(2)
                         }
@@ -1064,8 +1072,7 @@ struct MilestoneCardView: View {
                     // Text
                     if let milestoneText = milestone.milestoneText {
                         Text(milestoneText)
-                            .font(.custom("Inter_24pt-Bold", size: 16))
-                            .fontWeight(.bold)
+                            .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
                             .lineLimit(2)
                     }
@@ -1077,10 +1084,11 @@ struct MilestoneCardView: View {
                 Button(action: {
                     onEdit()
                 }) {
-                    Image(systemName: "pencil")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
+                    Image("edit")
+                        .resizable()
+                        .scaledToFit()
                         .frame(width: 24, height: 24)
+                        .foregroundColor(.white.opacity(0.7))
                 }
             }
             .padding(.horizontal, 16)
@@ -1517,10 +1525,11 @@ struct EditProfileView: View {
         }
         .background(Color(hex: "EDEDED"))
         .clipShape(RoundedCorner(radius: 40, corners: [.topLeft, .topRight]))
-        .presentationDetents([.large])
+        .presentationDetents([.fraction(1.0)])
         .presentationDragIndicator(.hidden)
         .presentationBackground(.clear)
         .offset(y: sheetDragOffset)
+        .ignoresSafeArea(.container, edges: .bottom)
         .actionSheet(isPresented: $showImageActionSheet) {
             ActionSheet(
                 title: Text("Add Photo"),

@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit // Za vibraciju
+import AVFoundation // Za zvuk
 
 struct MainTrackingView: View {
     @StateObject private var appState = AppStateManager.shared
@@ -21,6 +22,7 @@ struct MainTrackingView: View {
     @State private var currentAnimationID = UUID()
     @State private var clickedDate: Date? = nil
     @State private var milestoneTimer: Timer? = nil
+    @State private var audioPlayer: AVAudioPlayer? = nil
     
     var body: some View {
         GeometryReader { geometry in
@@ -403,6 +405,24 @@ struct MainTrackingView: View {
                     clickedDate = nil
                 }
             }
+        }
+    }
+    
+    private func playSound() {
+        guard let path = Bundle.main.path(forResource: "flower_sound", ofType: "mp3") else {
+            print("⚠️ MP3 fajl 'flower_sound.mp3' nije pronađen!")
+            return
+        }
+        
+        let url = URL(fileURLWithPath: path)
+        
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: url)
+            audioPlayer?.prepareToPlay()
+            audioPlayer?.play()
+            print("🔊 Zvuk se reprodukuje...")
+        } catch {
+            print("⚠️ Greška pri puštanju zvuka: \(error)")
         }
     }
     
