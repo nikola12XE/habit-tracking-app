@@ -145,7 +145,7 @@ struct ProfileView: View {
             .gesture(
                 DragGesture()
                     .onChanged { value in
-                        // Only detect upward drag when at top of scroll
+                        // Only detect upward drag when at top of scroll for Log Out reveal
                         if value.translation.height < 0 && abs(value.translation.height) > 20 {
                             if !showDeleteAccount {
                                 let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
@@ -160,6 +160,7 @@ struct ProfileView: View {
                         }
                     }
             )
+
             
             // Log Out button at bottom
             logOutButton
@@ -550,6 +551,32 @@ struct ProfileView: View {
                 .padding(.horizontal, 18)
                 .padding(.vertical, 15)
             }
+            
+            
+            // Delete Account
+            Button(action: {
+                showDeleteAlert = true
+            }) {
+                HStack {
+                    Text("Delete Account")
+                        .font(.custom("Inter_24pt-SemiBold", size: 15))
+                        .fontWeight(.semibold)
+                        .tracking(-0.3) // -2% letter spacing
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 15)
+            }
+            
+            // Extra space for better positioning when scrolled to bottom
+            Spacer()
+                .frame(height: 20)
         }
     }
     
