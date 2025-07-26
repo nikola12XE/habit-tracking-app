@@ -6,6 +6,7 @@ import UIKit
 
 struct ProfileView: View {
     @StateObject private var appState = AppStateManager.shared
+    @Environment(\.presentationMode) var presentationMode
     @StateObject private var coreDataManager = CoreDataManager.shared
     @State private var userProfile: UserProfile?
     @State private var showImagePicker = false
@@ -25,6 +26,7 @@ struct ProfileView: View {
     @State private var dragOffset: CGFloat = 0
     @State private var showDeleteAccount = false
     @State private var thresholdReached = false
+    @State private var sheetDragOffset: CGFloat = 0
 
     
         var body: some View {
@@ -35,61 +37,87 @@ struct ProfileView: View {
                 .frame(width: 36, height: 5)
                 .padding(.top, 8)
             
-            // Profile header with avatar and edit button
-            HStack {
-                // Avatar
-                Image("person.fill")
-                    .resizable()
-                    .frame(width: 52, height: 52)
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
-                .allowsHitTesting(false)
-                
-                // Edit button
-                ZStack {
-                    Circle()
-                        .fill(Color(hex: "E5E5E5"))
-                        .frame(width: 48, height: 48)
-                        .overlay(
-                            Circle()
-                                .stroke(Color(hex: "C9C9C9"), lineWidth: 1)
-                        )
-                    
-                    Image("pencil")
-                        .font(.system(size: 16, weight: .medium))
+            // Profile header with avatar and edit button (draggable area)
+            VStack(spacing: 0) {
+                HStack {
+                    // Avatar
+                    Image("person.fill")
+                        .resizable()
+                        .frame(width: 52, height: 52)
                         .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
-                }
-                .allowsHitTesting(false)
-                
-                Spacer()
-                
-                // Close button
-                Button(action: {
-                    appState.navigateTo(.main)
-                }) {
+                    .allowsHitTesting(false)
+                    
+                    // Edit button
                     ZStack {
                         Circle()
-                            .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
-                            .frame(width: 38, height: 38)
+                            .fill(Color(hex: "E5E5E5"))
+                            .frame(width: 48, height: 48)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color(hex: "C9C9C9"), lineWidth: 1)
+                            )
                         
-                        Image(systemName: "xmark")
+                        Image("pencil")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
                     }
+                    .allowsHitTesting(false)
+                    
+                    Spacer()
+                    
+                    // Close button
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
+                                .frame(width: 38, height: 38)
+                            
+                            Image(systemName: "xmark")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
-                .buttonStyle(PlainButtonStyle())
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 20)
-            .padding(.bottom, 24)
-            
-            // Name
-            Text("Nina Skrbic")
-                .font(.system(size: 24, weight: .semibold, design: .default))
-                .tracking(-0.96) // -4% letter spacing (24 * 0.04 = 0.96)
-                .foregroundColor(.black)
-                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 24)
-                .padding(.top, -2)
+                .padding(.top, 20)
+                .padding(.bottom, 24)
+                
+                // Name
+                Text("Nina Skrbic")
+                    .font(.system(size: 24, weight: .semibold, design: .default))
+                    .tracking(-0.96) // -4% letter spacing (24 * 0.04 = 0.96)
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 24)
+                    .padding(.top, -2)
+            }
+            .gesture(
+                // Drag gesture only on header area to dismiss sheet
+                DragGesture()
+                    .onChanged { value in
+                        if value.translation.height > 0 {
+                            // Allow downward drag and move sheet with finger
+                            sheetDragOffset = value.translation.height
+                        } else {
+                            // Block upward drag to prevent sheet expansion
+                            sheetDragOffset = 0
+                        }
+                    }
+                    .onEnded { value in
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            if value.translation.height > 150 {
+                                // Dismiss sheet if dragged down far enough
+                                presentationMode.wrappedValue.dismiss()
+                            } else {
+                                // Snap back to original position
+                                sheetDragOffset = 0
+                            }
+                        }
+                    }
+            )
             
             // Scrollable content with drag detection
             ScrollView {
@@ -134,7 +162,7 @@ struct ProfileView: View {
         .presentationDetents([.large])
         .presentationDragIndicator(.hidden)
         .presentationBackground(.clear)
-        .interactiveDismissDisabled(true)
+        .offset(y: sheetDragOffset)
         .onAppear {
             loadUserProfile()
         }
