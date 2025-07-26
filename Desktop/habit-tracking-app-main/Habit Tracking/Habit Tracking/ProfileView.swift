@@ -2,9 +2,15 @@ import SwiftUI
 import PhotosUI
 import UIKit
 
+// MARK: - Profile Views Organization
+// 
+// ProfileView - Main router that decides which profile to show based on user type
+// PremiumProfileView - Full featured profile for premium/subscribed users  
+// FreeUserProfileView - Limited profile for free users (in separate file)
+// Anonymous users will show FreeUserProfileView for now
 
-
-struct ProfileView: View {
+// MARK: - Premium Profile View
+struct PremiumProfileView: View {
     @StateObject private var appState = AppStateManager.shared
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var coreDataManager = CoreDataManager.shared
@@ -924,6 +930,7 @@ struct PlaySoundView: View {
     }
 }
 
+// MARK: - Premium Edit Profile View
 struct EditProfileView: View {
     @Environment(\.presentationMode) var presentationMode
     @Binding var firstName: String
@@ -1118,6 +1125,28 @@ struct EditProfileView: View {
         .presentationBackground(.clear)
         .offset(y: sheetDragOffset)
     }
+}
+
+// MARK: - Main Profile Router
+struct ProfileView: View {
+    @State private var userType: UserType = .premium // This will be set from backend/app state
+    
+    var body: some View {
+        switch userType {
+        case .premium:
+            PremiumProfileView()
+        case .free:
+            FreeUserProfileView()
+        case .anonymous:
+            FreeUserProfileView() // For now, same as free - can create separate later
+        }
+    }
+}
+
+enum UserType {
+    case premium
+    case free  
+    case anonymous
 }
 
 #Preview {
