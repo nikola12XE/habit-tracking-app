@@ -32,6 +32,8 @@ struct PremiumProfileView: View {
     @State private var showEditProfile = false
     @State private var firstName = "Nina"
     @State private var lastName = "Skrbic"
+    @State private var currentGoalText = "Grow Portfolio" // Default text
+    @State private var profileImageData: Data?
     @State private var dragOffset: CGFloat = 0
     @State private var showDeleteAccount = false
     @State private var thresholdReached = false
@@ -81,11 +83,26 @@ struct PremiumProfileView: View {
             // Profile header with avatar and edit button (no longer draggable)
             VStack(spacing: 0) {
                 HStack {
-                    // Avatar
-                    Image("person.fill")
-                        .resizable()
-                        .frame(width: 52, height: 52)
-                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                    // Avatar - show selected image or default icon
+                    Group {
+                        if let profileImageData = profileImageData,
+                           let uiImage = UIImage(data: profileImageData) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 52, height: 52)
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white, lineWidth: 5)
+                                )
+                        } else {
+                            Image("person.fill")
+                                .resizable()
+                                .frame(width: 52, height: 52)
+                                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                        }
+                    }
                     .allowsHitTesting(false)
                     
                     // Edit button
@@ -186,6 +203,7 @@ struct PremiumProfileView: View {
         .offset(y: sheetDragOffset)
         .onAppear {
             loadUserProfile()
+            loadCurrentGoalText()
         }
         .onChange(of: selectedPhoto) { _, newItem in
             Task {
@@ -195,8 +213,16 @@ struct PremiumProfileView: View {
                 }
             }
         }
+        .onChange(of: profileImageData) { _, newData in
+            if let userProfile = userProfile {
+                userProfile.avatar = newData
+                coreDataManager.updateUserProfile(userProfile)
+                // Notify MainTrackingView to update profile image
+                NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
+            }
+        }
         .fullScreenCover(isPresented: $showGoalEdit) {
-            EditGoalView(showGoalEdit: $showGoalEdit)
+            EditGoalView(showGoalEdit: $showGoalEdit, currentGoalText: $currentGoalText)
         }
         .sheet(isPresented: $showMilestones) {
             MilestonesView()
@@ -226,7 +252,7 @@ struct PremiumProfileView: View {
             PlaySoundView()
         }
         .sheet(isPresented: $showEditProfile) {
-            EditProfileView(firstName: $firstName, lastName: $lastName)
+            EditProfileView(firstName: $firstName, lastName: $lastName, profileImageData: $profileImageData, userProfile: userProfile, coreDataManager: coreDataManager)
         }
     }
     
@@ -255,7 +281,7 @@ struct PremiumProfileView: View {
                         Spacer()
                         
                         HStack(spacing: 8) {
-                            Text("Grow Portfolio")
+                            Text(currentGoalText)
                                 .font(.custom("Inter_24pt-SemiBold", size: 15))
                                 .tracking(-0.3) // -2% letter spacing
                                 .foregroundColor(.black)
@@ -683,6 +709,16 @@ struct PremiumProfileView: View {
     
     private func loadUserProfile() {
         // Load user profile logic
+        if let profile = coreDataManager.fetchUserProfile() {
+            userProfile = profile
+            profileImageData = profile.avatar
+        }
+    }
+    
+    private func loadCurrentGoalText() {
+        let existingGoals = coreDataManager.fetchGoals()
+        guard let goal = existingGoals.first else { return }
+        currentGoalText = goal.goalText ?? "Grow Portfolio"
     }
     
     private func logout() {
@@ -935,8 +971,15 @@ struct EditProfileView: View {
     @Environment(\.presentationMode) var presentationMode
     @Binding var firstName: String
     @Binding var lastName: String
+    @Binding var profileImageData: Data?
+    let userProfile: UserProfile?
+    let coreDataManager: CoreDataManager
     @State private var email = "ninaskrbic@gmail.com"
     @State private var sheetDragOffset: CGFloat = 0
+    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var showImageActionSheet = false
+    @State private var showCamera = false
+    @State private var showPhotoLibrary = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -980,29 +1023,47 @@ struct EditProfileView: View {
             
             // Profile avatar with + icon
             ZStack {
-                // Only Profile_Icon_Big (no circle background)
-                Image("Profile_Icon_Big")
-                    .resizable()
-                    .frame(width: 96, height: 96)
-                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                // Profile image - show selected image or default icon
+                if let profileImageData = profileImageData,
+                   let uiImage = UIImage(data: profileImageData) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 96, height: 96)
+                        .clipShape(Circle())
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white, lineWidth: 5)
+                        )
+                } else {
+                    // Default Profile_Icon_Big (no circle background)
+                    Image("Profile_Icon_Big")
+                        .resizable()
+                        .frame(width: 96, height: 96)
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                }
                 
                 // Plus icon overlay - positioned at bottom right, aligned with profile icon
                 VStack {
                     Spacer()
                     HStack {
                         Spacer()
-                        ZStack {
-                            Circle()
-                                .fill(Color.black)
-                                .frame(width: 38, height: 38)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color(red: 0.93, green: 0.93, blue: 0.93), lineWidth: 5)
-                                )
-                            
-                            Image(systemName: "plus")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white)
+                        Button(action: {
+                            showImageActionSheet = true
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.black)
+                                    .frame(width: 38, height: 38)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(Color(red: 0.93, green: 0.93, blue: 0.93), lineWidth: 5)
+                                    )
+                                
+                                Image(systemName: "plus")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.white)
+                            }
                         }
                     }
                 }
@@ -1103,7 +1164,7 @@ struct EditProfileView: View {
                 
                 // Save Details button
                 Button(action: {
-                    // Save logic here
+                    saveProfileDetails()
                     presentationMode.wrappedValue.dismiss()
                 }) {
                     Text("Save Details")
@@ -1119,11 +1180,55 @@ struct EditProfileView: View {
         }
         .background(Color(hex: "EDEDED"))
         .clipShape(RoundedCorner(radius: 40, corners: [.topLeft, .topRight]))
-        .ignoresSafeArea()
         .presentationDetents([.large])
         .presentationDragIndicator(.hidden)
         .presentationBackground(.clear)
         .offset(y: sheetDragOffset)
+        .actionSheet(isPresented: $showImageActionSheet) {
+            ActionSheet(
+                title: Text("Add Photo"),
+                message: Text("Choose how you want to add a photo"),
+                buttons: [
+                    .default(Text("Take Photo")) {
+                        showCamera = true
+                    },
+                    .default(Text("Choose from Library")) {
+                        showPhotoLibrary = true
+                    },
+                    .cancel()
+                ]
+            )
+        }
+        .sheet(isPresented: $showCamera) {
+            CameraView(photoData: $profileImageData)
+                .onDisappear {
+                    // Notify when camera photo is captured
+                    if profileImageData != nil {
+                        NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
+                    }
+                }
+        }
+        .photosPicker(isPresented: $showPhotoLibrary, selection: $selectedPhoto, matching: .images)
+        .onChange(of: selectedPhoto) { _, newItem in
+            Task {
+                if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                    profileImageData = data
+                    // Notify MainTrackingView to update profile image
+                    NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
+                }
+            }
+        }
+    }
+    
+    private func saveProfileDetails() {
+        if let userProfile = userProfile {
+            userProfile.firstName = firstName
+            userProfile.lastName = lastName
+            userProfile.email = email
+            userProfile.avatar = profileImageData
+            coreDataManager.updateUserProfile(userProfile)
+            NotificationCenter.default.post(name: NSNotification.Name("ProfileImageUpdated"), object: nil)
+        }
     }
 }
 
@@ -1152,40 +1257,400 @@ enum UserType {
 // MARK: - Edit Goal View (Onboarding with Back Arrow)
 struct EditGoalView: View {
     @Binding var showGoalEdit: Bool
+    @Binding var currentGoalText: String
     
     var body: some View {
         ZStack {
             // Same background as onboarding
             Color(red: 0.93, green: 0.93, blue: 0.93).ignoresSafeArea()
             
-            VStack(spacing: 0) {
-                // Back arrow area (same as login screen)
-                VStack(spacing: 0) {
-                    Spacer().frame(height: 90)
-                    
-                    // Back arrow - same positioning as login screen
-                    HStack(alignment: .firstTextBaseline, spacing: 24) {
-                        Button(action: { 
-                            showGoalEdit = false 
-                        }) {
-                            Image("back_arrow")
-                                .resizable()
-                                .frame(width: 32, height: 32)
-                                .alignmentGuide(.firstTextBaseline) { d in d[.bottom] + 12 }
-                        }
-                        Spacer()
-                    }
-                    .padding(.leading, 24)
-                    .frame(height: 62)
-                }
-                
-                // Onboarding flow content (adjusted for back arrow space)
-                GoalEntryFlowView()
-                    .padding(.top, -90) // Reduce top padding since we added back arrow area
-            }
+            // 100% identical onboarding flow with back arrow
+            EditGoalEntryFlowView(
+                onComplete: { 
+                    showGoalEdit = false 
+                },
+                currentGoalText: $currentGoalText
+            )
         }
     }
 }
+
+// MARK: - Edit Goal Entry Flow View (100% identical to original with back arrow)
+struct EditGoalEntryFlowView: View {
+    let onComplete: () -> Void
+    @Binding var currentGoalText: String
+    
+    @StateObject private var appState = AppStateManager.shared
+    @StateObject private var coreDataManager = CoreDataManager.shared
+    
+    @State private var currentPage = 0
+    @State private var goalText = ""
+    @State private var selectedDays: Set<Int> = [0, 1, 2, 3, 4] // Pre-select MTWTF
+    @State private var reminderEnabled = false
+    @State private var reminderTime = Calendar.current.date(from: DateComponents(hour: 9, minute: 0)) ?? Date()
+    @State private var isEditing = true // Always editing in this flow
+    @State private var existingGoal: Goal?
+    @State private var keyboardHeight: CGFloat = 0
+    @State private var slideDirection: SlideDirection = .forward
+    @State private var headerTextBottom: CGFloat = 0
+    @FocusState private var isTextFieldFocused: Bool
+    @State private var hasChanges = false
+    @State private var showConfirmation = false
+    
+    enum SlideDirection {
+        case forward, backward
+    }
+    
+    var body: some View {
+        ZStack {
+            VStack(spacing: 0) {
+                // Progress dots with back arrow horizontally aligned
+                HStack {
+                    // Back arrow aligned with progress dots
+                    Button(action: handleBack) {
+                        Image("back_arrow")
+                            .resizable()
+                            .frame(width: 32, height: 32)
+                    }
+                    .padding(.leading, 24)
+                    
+                    Spacer()
+                    
+                    // Progress dots (centered)
+                    HStack(spacing: 12) {
+                        ForEach(0..<3) { index in  // Changed back from 4 to 3
+                            ProgressDot(
+                                isActive: index == currentPage,
+                                isCompleted: index < currentPage,
+                                index: index
+                            )
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // Invisible spacer to balance layout
+                    Color.clear
+                        .frame(width: 32, height: 32)
+                        .padding(.trailing, 24)
+                }
+                .padding(.top, 40)
+                
+                headerView
+                stepContentView
+                Spacer() // Da popuni prostor
+            }
+            // Continue dugme na dnu (100% identično)
+            VStack {
+                Spacer()
+                Button(action: handleContinue) {
+                    Text("Continue")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(canContinue ? .white : Color.black.opacity(0.4))
+                        .frame(width: 200, height: 62)
+                        .background(canContinue ? Color.black : Color.black.opacity(0.05))
+                        .cornerRadius(100)
+                }
+                .disabled(!canContinue)
+                .padding(.bottom, keyboardHeight > 0 ? keyboardHeight + 24 : 24)
+                .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
+            }
+        }
+        .onAppear {
+            loadExistingGoal()
+            subscribeToKeyboardNotifications()
+        }
+        .onDisappear {
+            unsubscribeFromKeyboardNotifications()
+        }
+        .ignoresSafeArea(.keyboard)
+        .alert("Are you sure you want\nto edit your goal?", isPresented: $showConfirmation) {
+            Button("Edit Goal") {
+                applyChanges()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("The updated goal will take effect from today, while all previous entries will stay saved.")
+        }
+    }
+    
+    private var headerView: some View {
+        Group {
+            if currentPage == 0 {
+                VStack(spacing: 0) {
+                    Text("MY BIGGEST")
+                        .font(.custom("Thunder-BoldLC", size: 54))
+                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                        .multilineTextAlignment(.center)
+                    Text("GOAL IS TO")
+                        .font(.custom("Thunder-BoldLC", size: 54))
+                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.top, 32)
+                .padding(.bottom, 54)
+            } else if currentPage == 1 {
+                Text("AND I NEED TO\nWORK ON IT")
+                    .font(.custom("Thunder-BoldLC", size: 54))
+                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 32)
+                    .padding(.bottom, 54)
+            } else if currentPage == 2 {
+                Text("AT")
+                    .font(.custom("Thunder-BoldLC", size: 54))
+                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 32)
+                    .padding(.bottom, 54)
+            }
+        }
+    }
+    
+    private var stepContentView: some View {
+        GeometryReader { geo in
+            HStack(spacing: 0) {
+                step1View(width: geo.size.width, height: geo.size.height)
+                step2View(width: geo.size.width, height: geo.size.height)
+                step3View(width: geo.size.width, height: geo.size.height)
+            }
+            .frame(width: geo.size.width * 3, alignment: .leading) // Back to 3 steps
+            .contentShape(Rectangle())
+            .offset(x: -CGFloat(currentPage) * geo.size.width)
+            .animation(.easeInOut(duration: 0.6), value: currentPage)
+            .gesture(
+                DragGesture()
+                    .onEnded { value in
+                        if value.translation.width > 40 && currentPage > 0 {
+                            slideDirection = .backward
+                            handleBack()
+                        } else if value.translation.width < -40 && currentPage < 2 && canContinue {
+                            slideDirection = .forward
+                            handleContinue()
+                        }
+                    }
+            )
+        }
+    }
+    
+    private func step1View(width: CGFloat, height: CGFloat) -> some View {
+        ZStack {
+            // Header height (fiksno)
+            let headerHeight: CGFloat = 40 + 66 + 32 + 54 * 2
+            let buttonHeight: CGFloat = 62
+            let buttonBottomPadding: CGFloat = 24
+            // Gde je vrh dugmeta
+            let buttonTop: CGFloat = keyboardHeight > 0
+                ? height - keyboardHeight - buttonBottomPadding - buttonHeight
+                : height - buttonBottomPadding - buttonHeight
+            // Ako tastatura NIJE podignuta, input je na istoj visini kao na drugom koraku
+            let centerY: CGFloat = keyboardHeight > 0
+                ? (headerHeight + buttonTop) / 2 - 140 + 30 - 20 - 10 // dodatno podigni za 10px
+                : (headerHeight + buttonTop) / 2 - 120 - 20 - 10
+            VStack(spacing: 0) {
+                AnimatedTypewriterTextField(goalText: $goalText, isFocused: $isTextFieldFocused)
+                    .onChange(of: goalText) { oldValue, newValue in checkForChanges() }
+                Text("Enter your goal")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
+                    .padding(.top, 14)
+            }
+            .frame(width: width)
+            .position(x: width / 2, y: centerY)
+            .animation(.easeInOut(duration: 0.6), value: keyboardHeight)
+        }
+        .frame(width: width)
+    }
+    
+    private func step2View(width: CGFloat, height: CGFloat) -> some View {
+        ZStack {
+            // Header height (fiksno)
+            let headerHeight: CGFloat = 40 + 66 + 32 + 54 * 2
+            let buttonHeight: CGFloat = 62
+            let buttonBottomPadding: CGFloat = 24
+            // Gde je vrh dugmeta
+            let buttonTop: CGFloat = keyboardHeight > 0
+                ? height - keyboardHeight - buttonBottomPadding - buttonHeight
+                : height - buttonBottomPadding - buttonHeight
+            // Ista pozicija kao prvi korak
+            let centerY: CGFloat = keyboardHeight > 0
+                ? (headerHeight + buttonTop) / 2 - 140 + 30 - 20 - 10
+                : (headerHeight + buttonTop) / 2 - 120 - 20 - 10
+            VStack(spacing: 0) {
+                HStack(spacing: 2) {
+                    ForEach(0..<7) { dayIndex in
+                        DaySelectionButton(
+                            day: dayNames[dayIndex],
+                            isSelected: selectedDays.contains(dayIndex),
+                            action: {
+                                if selectedDays.contains(dayIndex) {
+                                    selectedDays.remove(dayIndex)
+                                } else {
+                                    selectedDays.insert(dayIndex)
+                                }
+                                checkForChanges()
+                            }
+                        )
+                    }
+                }
+                Text("Select your days")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047).opacity(0.7))
+                    .padding(.top, 14)
+            }
+            .frame(width: width)
+            .position(x: width / 2, y: centerY)
+        }
+        .frame(width: width)
+    }
+    
+    private func step3View(width: CGFloat, height: CGFloat) -> some View {
+        ZStack {
+            // Header height (fiksno)
+            let headerHeight: CGFloat = 40 + 66 + 32 + 54 * 2
+            let buttonHeight: CGFloat = 62
+            let buttonBottomPadding: CGFloat = 24
+            // Gde je vrh dugmeta
+            let buttonTop: CGFloat = keyboardHeight > 0
+                ? height - keyboardHeight - buttonBottomPadding - buttonHeight
+                : height - buttonBottomPadding - buttonHeight
+            // Ista pozicija kao prvi korak
+            let centerY: CGFloat = keyboardHeight > 0
+                ? (headerHeight + buttonTop) / 2 - 140 + 30 - 20 - 10
+                : (headerHeight + buttonTop) / 2 - 120 - 20 - 10
+            VStack(spacing: 0) {
+                ReminderInputView(
+                    reminderEnabled: $reminderEnabled,
+                    reminderTime: $reminderTime
+                )
+                .onChange(of: reminderEnabled) { oldValue, newValue in checkForChanges() }
+                .onChange(of: reminderTime) { oldValue, newValue in checkForChanges() }
+            }
+            .frame(width: width)
+            .position(x: width / 2, y: centerY)
+            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
+        }
+        .frame(width: width)
+    }
+    
+    private var canContinue: Bool {
+        switch currentPage {
+        case 0: return !goalText.isEmpty
+        case 1: return !selectedDays.isEmpty
+        case 2: return true
+        default: return false
+        }
+    }
+    
+    private func handleContinue() {
+        if currentPage < 2 && canContinue {
+            // Skloni tastaturu ako je na prvom koraku
+            if currentPage == 0 {
+                isTextFieldFocused = false
+            }
+            slideDirection = .forward
+            withAnimation(.easeInOut(duration: 0.6)) {
+                currentPage += 1
+            }
+        } else if currentPage == 2 {
+            // From step 3 (reminder) - check if user made changes
+            if hasChanges {
+                // Show confirmation popup
+                showConfirmation = true
+            } else {
+                // No changes made, just close
+                onComplete()
+            }
+        }
+    }
+    
+    private func handleBack() {
+        if currentPage > 0 {
+            slideDirection = .backward
+            withAnimation(.easeInOut(duration: 0.6)) {
+                currentPage -= 1
+            }
+        } else {
+            // First page - close the edit flow
+            onComplete()
+        }
+    }
+    
+    private func checkForChanges() {
+        guard let goal = existingGoal else { return }
+        
+        let originalGoalText = goal.goalText ?? ""
+        let originalDays = Set((goal.selectedDays as? [NSNumber])?.map { $0.intValue } ?? [])
+        let originalReminderEnabled = goal.reminderEnabled
+        let originalReminderTime = goal.reminderTime
+        
+        hasChanges = goalText != originalGoalText ||
+                    selectedDays != originalDays ||
+                    reminderEnabled != originalReminderEnabled ||
+                    reminderTime != originalReminderTime
+    }
+    
+    private func applyChanges() {
+        // Simply update the existing goal
+        // The changes will take effect from today while keeping previous entries
+        updateExistingGoal()
+        onComplete()
+    }
+    
+    private func updateExistingGoal() {
+        let existingGoals = coreDataManager.fetchGoals()
+        guard let goal = existingGoals.first else { return }
+        
+        goal.goalText = goalText
+        goal.selectedDays = Array(selectedDays).map { NSNumber(value: $0) } as NSArray
+        goal.reminderEnabled = reminderEnabled
+        goal.reminderTime = reminderEnabled ? reminderTime : nil
+        
+        coreDataManager.save()
+        
+        // Update the display text in main profile
+        currentGoalText = goalText
+    }
+    
+    private func loadExistingGoal() {
+        let existingGoals = coreDataManager.fetchGoals()
+        guard let goal = existingGoals.first else { return }
+        
+        existingGoal = goal
+        goalText = goal.goalText ?? ""
+        if let nsNumbers = goal.selectedDays as? [NSNumber] {
+            selectedDays = Set(nsNumbers.map { $0.intValue })
+        } else {
+            selectedDays = [0, 1, 2, 3, 4]
+        }
+        reminderEnabled = goal.reminderEnabled
+        reminderTime = goal.reminderTime ?? Calendar.current.date(from: DateComponents(hour: 9, minute: 0)) ?? Date()
+    }
+    
+    private func subscribeToKeyboardNotifications() {
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notif in
+            if let frame = notif.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                let keyWindow = UIApplication.shared.connectedScenes
+                    .compactMap { $0 as? UIWindowScene }
+                    .flatMap { $0.windows }
+                    .first { $0.isKeyWindow }
+                let bottomInset = keyWindow?.safeAreaInsets.bottom ?? 0
+                keyboardHeight = frame.height - bottomInset
+            }
+        }
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+            keyboardHeight = 0
+        }
+    }
+    
+    private func unsubscribeFromKeyboardNotifications() {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    private let dayNames = ["M", "T", "W", "T", "F", "S", "S"]
+}
+
+// Note: ReminderInputView and CustomSwitch components are already defined in GoalEntryFlowView.swift
 
 #Preview {
     ProfileView()

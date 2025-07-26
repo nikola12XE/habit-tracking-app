@@ -5,6 +5,8 @@ struct MainTrackingView: View {
     @StateObject private var appState = AppStateManager.shared
     @StateObject private var coreDataManager = CoreDataManager.shared
     @State private var currentGoal: Goal? = nil
+    @State private var userProfile: UserProfile?
+    @State private var profileImageData: Data?
     @State private var progressDays: [ProgressDay] = []
     @State private var currentMonth = Date()
     @State private var showProfile = false
@@ -44,18 +46,33 @@ struct MainTrackingView: View {
                             Spacer()
                             Button(action: { showProfile = true }) {
                                 ZStack {
-                                    Circle()
-                                        .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
-                                        .frame(width: 48, height: 48)
-                                        .overlay(
-                                            Circle()
-                                                .stroke(Color.white, lineWidth: 5)
-                                        )
-                                    Image(systemName: "person.fill")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 28, height: 28)
-                                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                                    // Profile image or default icon
+                                    if let profileImageData = profileImageData,
+                                       let uiImage = UIImage(data: profileImageData) {
+                                        Image(uiImage: uiImage)
+                                            .resizable()
+                                            .scaledToFill()
+                                            .frame(width: 48, height: 48)
+                                            .clipShape(Circle())
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(Color.white, lineWidth: 5)
+                                            )
+                                    } else {
+                                        Circle()
+                                            .fill(Color(red: 0.85, green: 0.85, blue: 0.85))
+                                            .frame(width: 48, height: 48)
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(Color.white, lineWidth: 5)
+                                            )
+                                        
+                                        Image(systemName: "person.fill")
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 28, height: 28)
+                                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                                    }
                                 }
                             }
                             .padding(.trailing, 24)
@@ -68,6 +85,12 @@ struct MainTrackingView: View {
                 }
                 .sheet(isPresented: $showProfile) {
                     ProfileView()
+                }
+                .onChange(of: showProfile) { _, isShowing in
+                    if !isShowing {
+                        // Profile sheet was dismissed, reload user profile
+                        loadUserProfile()
+                    }
                 }
                 // KALENDAR BLOK - SIVA POZADINA + ScrollView
                 ZStack(alignment: .top) {
@@ -104,6 +127,7 @@ struct MainTrackingView: View {
             }
             .onAppear {
                 loadData()
+                loadUserProfile()
                 withAnimation(.easeInOut(duration: 0.5)) {
                     calendarOffsetAnim = calendarOffset
                 }
@@ -112,6 +136,9 @@ struct MainTrackingView: View {
                 withAnimation(.easeInOut(duration: 0.5)) {
                     calendarOffsetAnim = newValue
                 }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ProfileImageUpdated"))) { _ in
+                loadUserProfile()
             }
         }
         .navigationBarHidden(true)
@@ -289,6 +316,13 @@ struct MainTrackingView: View {
         } else {
             // No goal set, show alert
             showNoGoalAlert = true
+        }
+    }
+    
+    private func loadUserProfile() {
+        if let profile = coreDataManager.fetchUserProfile() {
+            userProfile = profile
+            profileImageData = profile.avatar
         }
     }
     
