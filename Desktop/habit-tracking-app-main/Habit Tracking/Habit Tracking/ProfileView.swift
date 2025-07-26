@@ -38,6 +38,7 @@ struct PremiumProfileView: View {
     @State private var showDeleteAccount = false
     @State private var thresholdReached = false
     @State private var sheetDragOffset: CGFloat = 0
+    @State private var milestoneCount = 0
 
     
         var body: some View {
@@ -204,6 +205,13 @@ struct PremiumProfileView: View {
         .onAppear {
             loadUserProfile()
             loadCurrentGoalText()
+            loadMilestoneCount()
+        }
+        .onChange(of: showMilestones) { _, isShowing in
+            if !isShowing {
+                // Reload milestone count when sheet is dismissed
+                loadMilestoneCount()
+            }
         }
         .onChange(of: selectedPhoto) { _, newItem in
             Task {
@@ -315,7 +323,7 @@ struct PremiumProfileView: View {
                         Spacer()
                         
                         HStack(spacing: 8) {
-                            Text("5")
+                            Text("\(milestoneCount)")
                                 .font(.custom("Inter_24pt-SemiBold", size: 15))
                                 .tracking(-0.3) // -2% letter spacing
                                 .foregroundColor(.black)
@@ -732,6 +740,21 @@ struct PremiumProfileView: View {
         currentGoalText = goal.goalText ?? "Grow Portfolio"
     }
     
+    private func loadMilestoneCount() {
+        let existingGoals = coreDataManager.fetchGoals()
+        guard let goal = existingGoals.first else { 
+            milestoneCount = 0
+            return 
+        }
+        
+        let progressDays = coreDataManager.fetchProgressDays(for: goal)
+        milestoneCount = progressDays.filter { 
+            let hasText = $0.milestoneText != nil && !($0.milestoneText?.isEmpty ?? true)
+            let hasPhoto = $0.milestonePhoto != nil
+            return hasText || hasPhoto
+        }.count
+    }
+    
     private func logout() {
         // Logout logic
         appState.navigateTo(.splash)
@@ -753,29 +776,332 @@ struct PremiumProfileView: View {
 // MARK: - Supporting Views
 
 struct MilestonesView: View {
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentationMode) var presentationMode
+    @StateObject private var coreDataManager = CoreDataManager.shared
+    @State private var milestones: [ProgressDay] = []
+    @State private var currentGoal: Goal?
+    @State private var sheetDragOffset: CGFloat = 0
+    @State private var selectedMilestone: ProgressDay?
+    @State private var showMilestoneEdit = false
     
     var body: some View {
-        NavigationView {
-            VStack {
-                Text("Milestones")
-                    .font(.largeTitle)
-                    .padding()
+        VStack(spacing: 0) {
+            // Header
+            VStack(spacing: 0) {
+                // Drag handle
+                RoundedRectangle(cornerRadius: 2.5)
+                    .fill(Color(red: 0.8, green: 0.8, blue: 0.8))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 16)
+                    .padding(.bottom, 20)
                 
-                Spacer()
-            }
-            .navigationTitle("Milestones")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
+                // Title with trophy icon and close button
+                HStack {
+                    Spacer()
+                    
+                    HStack(spacing: 8) {
+                        Image("Trophy")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 24, height: 24)
+                        
+                        Text("\(milestones.count) Milestones")
+                            .font(.custom("Inter_24pt-SemiBold", size: 20))
+                            .fontWeight(.semibold)
+                            .foregroundColor(.black)
                     }
+                    
+                    Spacer()
+                    
+                    // Close button - same style as EditProfileView
+                    Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(red: 0.9, green: 0.9, blue: 0.9))
+                                .frame(width: 38, height: 38)
+                            
+                            Image(systemName: "xmark")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+                .padding(.bottom, 32)
+            }
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        if value.translation.height > 0 {
+                            sheetDragOffset = value.translation.height
+                        } else {
+                            sheetDragOffset = 0
+                        }
+                    }
+                    .onEnded { value in
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            if value.translation.height > 150 {
+                                presentationMode.wrappedValue.dismiss()
+                            } else {
+                                sheetDragOffset = 0
+                            }
+                        }
+                    }
+            )
+            
+            // Content
+            if milestones.isEmpty {
+                // Empty state
+                VStack(spacing: 24) {
+                    Image("Trophy")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 80, height: 80)
+                        .opacity(0.3)
+                    
+                    VStack(spacing: 8) {
+                        Text("No milestones yet")
+                            .font(.custom("Inter_24pt-SemiBold", size: 18))
+                            .fontWeight(.semibold)
+                            .foregroundColor(.black)
+                        
+                        Text("Complete your daily goals and add milestones to track your progress")
+                            .font(.custom("Inter_24pt-Regular", size: 14))
+                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 40)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.top, 60)
+            } else {
+                // Milestones list
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        ForEach(Array(milestones.enumerated()), id: \.element.id) { index, milestone in
+                            MilestoneCardView(milestone: milestone, index: index) {
+                                selectedMilestone = milestone
+                                showMilestoneEdit = true
+                            }
+                        }
+                        
+                        // Extra space at bottom
+                        Spacer()
+                            .frame(height: 20)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 8)
                 }
             }
         }
+        .background(Color(hex: "EDEDED"))
+        .clipShape(RoundedCorner(radius: 40, corners: [.topLeft, .topRight]))
+        .presentationDetents([.large])
+        .presentationDragIndicator(.hidden)
+        .presentationBackground(.clear)
+        .offset(y: sheetDragOffset)
+        .onAppear {
+            loadMilestones()
+        }
+        .sheet(isPresented: $showMilestoneEdit) {
+            if let milestone = selectedMilestone {
+                MilestonePopupView(progressDay: milestone, isPresented: $showMilestoneEdit)
+                    .onDisappear {
+                        // Reload milestones when edit sheet is dismissed
+                        loadMilestones()
+                    }
+            }
+        }
+    }
+    
+    private func loadMilestones() {
+        let goals = coreDataManager.fetchGoals()
+        currentGoal = goals.first
+        
+        if let goal = currentGoal {
+            let progressDays = coreDataManager.fetchProgressDays(for: goal)
+            milestones = progressDays.filter { 
+                let hasText = $0.milestoneText != nil && !($0.milestoneText?.isEmpty ?? true)
+                let hasPhoto = $0.milestonePhoto != nil
+                return hasText || hasPhoto
+            }.sorted { ($0.date ?? Date.distantPast) > ($1.date ?? Date.distantPast) } // Most recent first
+        }
     }
 }
+
+struct MilestoneCardView: View {
+    let milestone: ProgressDay
+    let index: Int
+    let onEdit: () -> Void
+    
+    private var hasText: Bool {
+        milestone.milestoneText != nil && !(milestone.milestoneText?.isEmpty ?? true)
+    }
+    
+    private var hasPhoto: Bool {
+        milestone.milestonePhoto != nil
+    }
+    
+    private var rotationAngle: Double {
+        return index % 2 == 0 ? 1.0 : -1.0
+    }
+    
+    var body: some View {
+        ZStack {
+            if hasPhoto {
+                // Card with photo (with or without text)
+                photoCard
+            } else {
+                // Text-only card with orange gradient
+                textOnlyCard
+            }
+        }
+        .rotationEffect(.degrees(rotationAngle))
+    }
+    
+    @ViewBuilder
+    private var photoCard: some View {
+        ZStack {
+            // Background image
+            if let photoData = milestone.milestonePhoto,
+               let uiImage = UIImage(data: photoData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 372, height: 227)
+                    .clipped()
+            }
+            
+            // Dark gradient overlay
+            LinearGradient(
+                stops: [
+                    .init(color: Color.black.opacity(0), location: 0.4978),
+                    .init(color: Color.black.opacity(0.7), location: 1.0)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            
+            // Content overlay
+            VStack {
+                HStack {
+                    Spacer()
+                    
+                    // Edit icon
+                    Button(action: {
+                        onEdit()
+                    }) {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7))
+                            .frame(width: 24, height: 24)
+                    }
+                }
+                .padding(.top, 16)
+                .padding(.trailing, 16)
+                
+                Spacer()
+                
+                // Bottom content
+                HStack {
+                    VStack(alignment: .leading, spacing: 6) {
+                        // Date
+                        Text(dateString(from: milestone.date ?? Date()))
+                            .font(.custom("Inter_24pt-Medium", size: 14))
+                            .foregroundColor(.white.opacity(0.7))
+                        
+                        // Text (if exists)
+                        if hasText, let milestoneText = milestone.milestoneText {
+                            Text(milestoneText)
+                                .font(.custom("Inter_24pt-Bold", size: 16))
+                                .fontWeight(.bold)
+                                .foregroundColor(.white)
+                                .lineLimit(2)
+                        }
+                    }
+                    
+                    Spacer()
+                }
+                .padding(.bottom, 16)
+                .padding(.leading, 16)
+            }
+        }
+        .frame(width: 372, height: 227)
+        .background(Color(hex: "D9D9D9"))
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(Color.white, lineWidth: 8)
+        )
+        .cornerRadius(6)
+        .shadow(color: Color.black.opacity(0.05), radius: 22, x: 0, y: 24)
+    }
+    
+    @ViewBuilder
+    private var textOnlyCard: some View {
+        ZStack {
+            // Orange gradient background
+            LinearGradient(
+                stops: [
+                    .init(color: Color(hex: "FF9A1E"), location: 0.0384),
+                    .init(color: Color(hex: "FEC22B"), location: 0.9963)
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            
+            // Content
+            HStack {
+                VStack(alignment: .leading, spacing: 6) {
+                    // Date
+                    Text(dateString(from: milestone.date ?? Date()))
+                        .font(.custom("Inter_24pt-Medium", size: 14))
+                        .foregroundColor(.white.opacity(0.7))
+                    
+                    // Text
+                    if let milestoneText = milestone.milestoneText {
+                        Text(milestoneText)
+                            .font(.custom("Inter_24pt-Bold", size: 16))
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .lineLimit(2)
+                    }
+                }
+                
+                Spacer()
+                
+                // Edit icon
+                Button(action: {
+                    onEdit()
+                }) {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.7))
+                        .frame(width: 24, height: 24)
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+        .frame(width: 372, height: 76)
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(Color.white, lineWidth: 8)
+        )
+        .cornerRadius(6)
+        .shadow(color: Color.black.opacity(0.05), radius: 22, x: 0, y: 24)
+    }
+    
+    private func dateString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd. MM. yyyy."
+        return formatter.string(from: date)
+    }
+}
+
+
 
 struct PremiumView: View {
     @Environment(\.dismiss) private var dismiss

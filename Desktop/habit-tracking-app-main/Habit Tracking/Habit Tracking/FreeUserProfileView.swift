@@ -3,7 +3,9 @@ import UIKit
 
 struct FreeUserProfileView: View {
     @Environment(\.presentationMode) var presentationMode
+    @StateObject private var coreDataManager = CoreDataManager.shared
     @State private var sheetDragOffset: CGFloat = 0
+    @State private var milestoneCount = 0
     
     var body: some View {
         VStack(spacing: 0) {
@@ -224,7 +226,7 @@ struct FreeUserProfileView: View {
                         Spacer()
                         
                         HStack(spacing: 8) {
-                            Text("5")
+                            Text("\(milestoneCount)")
                                 .font(.system(size: 15, weight: .regular, design: .default))
                                 .foregroundColor(Color(hex: "0C0C0C"))
                             
@@ -430,6 +432,24 @@ struct FreeUserProfileView: View {
         }
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(.bottom, 32)
+        .onAppear {
+            loadMilestoneCount()
+        }
+    }
+    
+    private func loadMilestoneCount() {
+        let existingGoals = coreDataManager.fetchGoals()
+        guard let goal = existingGoals.first else { 
+            milestoneCount = 0
+            return 
+        }
+        
+        let progressDays = coreDataManager.fetchProgressDays(for: goal)
+        milestoneCount = progressDays.filter { 
+            let hasText = $0.milestoneText != nil && !($0.milestoneText?.isEmpty ?? true)
+            let hasPhoto = $0.milestonePhoto != nil
+            return hasText || hasPhoto
+        }.count
     }
 }
 
