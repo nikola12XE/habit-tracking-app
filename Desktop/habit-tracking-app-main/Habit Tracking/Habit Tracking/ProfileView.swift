@@ -712,6 +712,17 @@ struct PremiumProfileView: View {
         if let profile = coreDataManager.fetchUserProfile() {
             userProfile = profile
             profileImageData = profile.avatar
+            
+            // Split name into firstName and lastName
+            if let name = profile.name {
+                let nameComponents = name.components(separatedBy: " ")
+                firstName = nameComponents.first ?? "Nina"
+                lastName = nameComponents.count > 1 ? nameComponents.dropFirst().joined(separator: " ") : "Skrbic"
+            }
+        } else {
+            // Create user profile if it doesn't exist
+            userProfile = coreDataManager.createUserProfile(email: "ninaskrbic@gmail.com", name: "\(firstName) \(lastName)")
+            profileImageData = nil
         }
     }
     
@@ -1218,12 +1229,24 @@ struct EditProfileView: View {
                 }
             }
         }
+        .onAppear {
+            // Load email and name from userProfile when view appears
+            if let userProfile = userProfile {
+                email = userProfile.email ?? "ninaskrbic@gmail.com"
+                
+                // Split name into firstName and lastName
+                if let name = userProfile.name {
+                    let nameComponents = name.components(separatedBy: " ")
+                    firstName = nameComponents.first ?? "Nina"
+                    lastName = nameComponents.count > 1 ? nameComponents.dropFirst().joined(separator: " ") : "Skrbic"
+                }
+            }
+        }
     }
     
     private func saveProfileDetails() {
         if let userProfile = userProfile {
-            userProfile.firstName = firstName
-            userProfile.lastName = lastName
+            userProfile.name = "\(firstName) \(lastName)"
             userProfile.email = email
             userProfile.avatar = profileImageData
             coreDataManager.updateUserProfile(userProfile)
