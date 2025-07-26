@@ -243,16 +243,16 @@ struct CustomInputField: View {
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color(hex: "E4E4E4"))
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(hex: "767676").opacity(0.3), lineWidth: 1))
-                        .frame(height: 48)
+                        .frame(height: 42)
                     if text.isEmpty {
                         Text(placeholder)
                             .padding(.horizontal, 16)
-                            .font(Font.custom("Inter-SemiBold", size: 16))
+                            .font(Font.custom("Inter-SemiBold", size: 15))
                             .foregroundColor(Color(hex: "8F8F8F"))
                     }
                     SecureField("", text: $text)
                         .padding(.horizontal, 16)
-                        .font(Font.custom("Inter-SemiBold", size: 16))
+                        .font(Font.custom("Inter-SemiBold", size: 15))
                         .foregroundColor(Color(hex: "0C0C0C"))
                 }
             } else {
@@ -260,16 +260,16 @@ struct CustomInputField: View {
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color(hex: "E4E4E4"))
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(hex: "767676").opacity(0.3), lineWidth: 1))
-                        .frame(height: 48)
+                        .frame(height: 42)
                     if text.isEmpty {
                         Text(placeholder)
                             .padding(.horizontal, 16)
-                            .font(Font.custom("Inter-SemiBold", size: 16))
+                            .font(Font.custom("Inter-SemiBold", size: 15))
                             .foregroundColor(Color(hex: "8F8F8F"))
                     }
                     TextField("", text: $text)
                         .padding(.horizontal, 16)
-                        .font(Font.custom("Inter-SemiBold", size: 16))
+                        .font(Font.custom("Inter-SemiBold", size: 15))
                         .foregroundColor(Color(hex: "0C0C0C"))
                 }
             }

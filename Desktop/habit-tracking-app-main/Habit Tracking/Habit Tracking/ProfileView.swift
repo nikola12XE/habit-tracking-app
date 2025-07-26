@@ -23,6 +23,9 @@ struct ProfileView: View {
     @State private var showSecondReminder = false
     @State private var showReminderTime = false
     @State private var showPlaySound = false
+    @State private var showEditProfile = false
+    @State private var firstName = "Nina"
+    @State private var lastName = "Skrbic"
     @State private var dragOffset: CGFloat = 0
     @State private var showDeleteAccount = false
     @State private var thresholdReached = false
@@ -80,20 +83,23 @@ struct ProfileView: View {
                     .allowsHitTesting(false)
                     
                     // Edit button
-                    ZStack {
-                        Circle()
-                            .fill(Color(hex: "E5E5E5"))
-                            .frame(width: 48, height: 48)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color(hex: "C9C9C9"), lineWidth: 1)
-                            )
-                        
-                        Image("pencil")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                    Button(action: {
+                        showEditProfile = true
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(hex: "E5E5E5"))
+                                .frame(width: 48, height: 48)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color(hex: "C9C9C9"), lineWidth: 1)
+                                )
+                            
+                            Image("pencil")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                        }
                     }
-                    .allowsHitTesting(false)
                     
                     Spacer()
                     
@@ -118,7 +124,7 @@ struct ProfileView: View {
                 .padding(.bottom, 24)
                 
                 // Name
-                Text("Nina Skrbic")
+                Text("\(firstName) \(lastName)")
                     .font(.system(size: 24, weight: .semibold, design: .default))
                     .tracking(-0.96) // -4% letter spacing (24 * 0.04 = 0.96)
                     .foregroundColor(.black)
@@ -212,6 +218,9 @@ struct ProfileView: View {
         }
         .sheet(isPresented: $showPlaySound) {
             PlaySoundView()
+        }
+        .sheet(isPresented: $showEditProfile) {
+            EditProfileView(firstName: $firstName, lastName: $lastName)
         }
     }
     
@@ -912,6 +921,202 @@ struct PlaySoundView: View {
                 }
             }
         }
+    }
+}
+
+struct EditProfileView: View {
+    @Environment(\.presentationMode) var presentationMode
+    @Binding var firstName: String
+    @Binding var lastName: String
+    @State private var email = "ninaskrbic@gmail.com"
+    @State private var sheetDragOffset: CGFloat = 0
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Pull-down indicator (draggable handle)
+            VStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 2.5)
+                    .fill(Color(red: 0.8, green: 0.8, blue: 0.8))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 8)
+                    .padding(.bottom, 16)
+                
+                // Invisible extended touch area for easier dragging
+                Rectangle()
+                    .fill(Color.clear)
+                    .frame(height: 20)
+            }
+            .gesture(
+                // Drag gesture only on handle area to dismiss sheet
+                DragGesture()
+                    .onChanged { value in
+                        if value.translation.height > 0 {
+                            // Allow downward drag and move sheet with finger
+                            sheetDragOffset = value.translation.height
+                        } else {
+                            // Block upward drag to prevent sheet expansion
+                            sheetDragOffset = 0
+                        }
+                    }
+                    .onEnded { value in
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            if value.translation.height > 150 {
+                                // Dismiss sheet if dragged down far enough
+                                presentationMode.wrappedValue.dismiss()
+                            } else {
+                                // Snap back to original position
+                                sheetDragOffset = 0
+                            }
+                        }
+                    }
+            )
+            
+            // Profile avatar with + icon
+            ZStack {
+                // Only Profile_Icon_Big (no circle background)
+                Image("Profile_Icon_Big")
+                    .resizable()
+                    .frame(width: 96, height: 96)
+                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                
+                // Plus icon overlay - positioned at bottom right, aligned with profile icon
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        ZStack {
+                            Circle()
+                                .fill(Color.black)
+                                .frame(width: 38, height: 38)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color(red: 0.93, green: 0.93, blue: 0.93), lineWidth: 5)
+                                )
+                            
+                            Image(systemName: "plus")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                        }
+                    }
+                }
+            }
+            .frame(width: 96, height: 96) // Define exact frame for positioning
+            .padding(.top, 40)
+            .padding(.bottom, 34)
+            
+            // Form fields
+            VStack(spacing: 18) {
+                // First Name
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("First Name")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                        Spacer()
+                    }
+                    
+                    TextField("", text: $firstName)
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                        .padding(.horizontal, 16)
+                        .frame(height: 42)
+                        .background(Color(red: 0.894, green: 0.894, blue: 0.894))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(red: 0.46, green: 0.46, blue: 0.46).opacity(0.28), lineWidth: 1)
+                        )
+                        .cornerRadius(8)
+                }
+                
+                // Last Name
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("Last Name")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                        Spacer()
+                    }
+                    
+                    TextField("", text: $lastName)
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                        .padding(.horizontal, 16)
+                        .frame(height: 42)
+                        .background(Color(red: 0.894, green: 0.894, blue: 0.894))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(red: 0.46, green: 0.46, blue: 0.46).opacity(0.28), lineWidth: 1)
+                        )
+                        .cornerRadius(8)
+                }
+                
+                // Email
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("Email")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                        Spacer()
+                    }
+                    
+                    TextField("", text: $email)
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                        .padding(.horizontal, 16)
+                        .frame(height: 42)
+                        .background(Color(red: 0.894, green: 0.894, blue: 0.894))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(red: 0.46, green: 0.46, blue: 0.46).opacity(0.28), lineWidth: 1)
+                        )
+                        .cornerRadius(8)
+                }
+            }
+            .padding(.horizontal, 24)
+            
+            Spacer()
+            
+            // Bottom buttons
+            HStack(spacing: 10) {
+                // Cancel button
+                Button(action: {
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Text("Cancel")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.black)
+                        .frame(width: 114, height: 62)
+                        .background(Color(red: 0.894, green: 0.894, blue: 0.894))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 100)
+                                .stroke(Color(red: 0.85, green: 0.85, blue: 0.85), lineWidth: 1)
+                        )
+                        .cornerRadius(100)
+                }
+                
+                // Save Details button
+                Button(action: {
+                    // Save logic here
+                    presentationMode.wrappedValue.dismiss()
+                }) {
+                    Text("Save Details")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 62)
+                        .background(Color.black)
+                        .cornerRadius(100)
+                }
+            }
+            .padding(.horizontal, 58)
+            .padding(.bottom, 32)
+        }
+        .background(Color(hex: "EDEDED"))
+        .clipShape(RoundedCorner(radius: 40, corners: [.topLeft, .topRight]))
+        .ignoresSafeArea()
+        .presentationDetents([.large])
+        .presentationDragIndicator(.hidden)
+        .presentationBackground(.clear)
+        .offset(y: sheetDragOffset)
     }
 }
 
