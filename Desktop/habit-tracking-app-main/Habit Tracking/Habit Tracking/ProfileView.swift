@@ -31,13 +31,45 @@ struct ProfileView: View {
     
         var body: some View {
         VStack(spacing: 0) {
-            // Pull-down indicator
-            RoundedRectangle(cornerRadius: 2.5)
-                .fill(Color(red: 0.8, green: 0.8, blue: 0.8))
-                .frame(width: 36, height: 5)
-                .padding(.top, 8)
+            // Pull-down indicator (draggable handle)
+            VStack(spacing: 0) {
+                RoundedRectangle(cornerRadius: 2.5)
+                    .fill(Color(red: 0.8, green: 0.8, blue: 0.8))
+                    .frame(width: 36, height: 5)
+                    .padding(.top, 8)
+                    .padding(.bottom, 16)
+                
+                // Invisible extended touch area for easier dragging
+                Rectangle()
+                    .fill(Color.clear)
+                    .frame(height: 20)
+            }
+            .gesture(
+                // Drag gesture only on handle area to dismiss sheet
+                DragGesture()
+                    .onChanged { value in
+                        if value.translation.height > 0 {
+                            // Allow downward drag and move sheet with finger
+                            sheetDragOffset = value.translation.height
+                        } else {
+                            // Block upward drag to prevent sheet expansion
+                            sheetDragOffset = 0
+                        }
+                    }
+                    .onEnded { value in
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            if value.translation.height > 150 {
+                                // Dismiss sheet if dragged down far enough
+                                presentationMode.wrappedValue.dismiss()
+                            } else {
+                                // Snap back to original position
+                                sheetDragOffset = 0
+                            }
+                        }
+                    }
+            )
             
-            // Profile header with avatar and edit button (draggable area)
+            // Profile header with avatar and edit button (no longer draggable)
             VStack(spacing: 0) {
                 HStack {
                     // Avatar
@@ -94,30 +126,6 @@ struct ProfileView: View {
                     .padding(.horizontal, 24)
                     .padding(.top, -2)
             }
-            .gesture(
-                // Drag gesture only on header area to dismiss sheet
-                DragGesture()
-                    .onChanged { value in
-                        if value.translation.height > 0 {
-                            // Allow downward drag and move sheet with finger
-                            sheetDragOffset = value.translation.height
-                        } else {
-                            // Block upward drag to prevent sheet expansion
-                            sheetDragOffset = 0
-                        }
-                    }
-                    .onEnded { value in
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            if value.translation.height > 150 {
-                                // Dismiss sheet if dragged down far enough
-                                presentationMode.wrappedValue.dismiss()
-                            } else {
-                                // Snap back to original position
-                                sheetDragOffset = 0
-                            }
-                        }
-                    }
-            )
             
             // Scrollable content with drag detection
             ScrollView {
