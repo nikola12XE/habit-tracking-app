@@ -1,5 +1,8 @@
 import SwiftUI
 import PhotosUI
+import UIKit
+
+
 
 struct ProfileView: View {
     @StateObject private var appState = AppStateManager.shared
@@ -19,6 +22,10 @@ struct ProfileView: View {
     @State private var showSecondReminder = false
     @State private var showReminderTime = false
     @State private var showPlaySound = false
+    @State private var dragOffset: CGFloat = 0
+    @State private var showDeleteAccount = false
+    @State private var thresholdReached = false
+
     
         var body: some View {
         VStack(spacing: 0) {
@@ -84,7 +91,7 @@ struct ProfileView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, -2)
             
-            // Scrollable content
+            // Scrollable content with drag detection
             ScrollView {
                 VStack(spacing: 32) {
                     // Account Details section
@@ -99,6 +106,24 @@ struct ProfileView: View {
                 .padding(.horizontal, 24)
                 .padding(.top, 32)
             }
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        // Only detect upward drag when at top of scroll
+                        if value.translation.height < 0 && abs(value.translation.height) > 20 {
+                            if !showDeleteAccount {
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                                impactFeedback.impactOccurred()
+                                
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    dragOffset = -60
+                                    showDeleteAccount = true
+                                    thresholdReached = true
+                                }
+                            }
+                        }
+                    }
+            )
             
             // Log Out button at bottom
             logOutButton
@@ -109,6 +134,7 @@ struct ProfileView: View {
         .presentationDetents([.large])
         .presentationDragIndicator(.hidden)
         .presentationBackground(.clear)
+        .interactiveDismissDisabled(true)
         .onAppear {
             loadUserProfile()
         }
@@ -237,8 +263,7 @@ struct ProfileView: View {
                 }) {
                     HStack {
                         Text("Your Plan")
-                            .font(.custom("Inter_24pt-Bold", size: 15))
-                            .fontWeight(.bold)
+                            .font(.system(size: 16, weight: .bold, design: .default))
                             .tracking(-0.3) // -2% letter spacing
                             .foregroundColor(.white)
                         
@@ -246,9 +271,13 @@ struct ProfileView: View {
                         
                         HStack(spacing: 8) {
                             Text("Premium")
-                                .font(.custom("Inter_24pt-Bold", size: 15))
+                                .font(.system(size: 15, weight: .semibold, design: .default))
                                 .tracking(-0.3) // -2% letter spacing
-                                .foregroundColor(.white)
+                                .foregroundColor(Color(hex: "0C0C0C"))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.white)
+                                .cornerRadius(100)
                             
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 14, weight: .medium))
@@ -261,15 +290,26 @@ struct ProfileView: View {
                         ZStack {
                             Color(red: 1.0, green: 0.6, blue: 0.0)
                             
-                            // Plus pattern overlay
-                            HStack(spacing: 8) {
-                                ForEach(0..<20, id: \.self) { _ in
-                                    Image(systemName: "plus")
-                                        .font(.system(size: 8))
-                                        .foregroundColor(.white.opacity(0.3))
-                                }
-                            }
+                            // Pattern background overlay - single image covering entire button
+                            Image("pattern_background")
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .padding(-20) // Extend pattern 20px beyond button boundaries
+                                .clipped()
+                                .opacity(1.0)
                         }
+                    )
+                    .overlay(
+                        RoundedCorner(radius: 8, corners: [.bottomLeft, .bottomRight])
+                            .stroke(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [Color(hex: "FF9A1E"), Color(hex: "FEC22B")]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                ),
+                                lineWidth: 1
+                            )
                     )
                     .clipShape(RoundedCorner(radius: 8, corners: [.bottomLeft, .bottomRight]))
                 }
@@ -477,30 +517,66 @@ struct ProfileView: View {
         }
     }
     
-    private var logOutButton: some View {
-        VStack(spacing: 16) {
+        private var logOutButton: some View {
+        VStack(spacing: 0) {
+            // Log Out Button moves up when Delete Account appears
             Button(action: {
                 showLogoutAlert = true
             }) {
                 Text("Log Out")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 16, weight: .medium, design: .default))
+                    .tracking(-0.64) // -4% letter spacing (16 * 0.04 = 0.64)
                     .foregroundColor(.black)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(Color.white)
-                    .cornerRadius(12)
+                    .frame(width: 200, height: 62)
+                    .background(Color(hex: "E4E4E4"))
+                    .cornerRadius(100)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color(red: 0.9, green: 0.9, blue: 0.9), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 100)
+                            .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
                     )
             }
-            .padding(.horizontal, 24)
+            .offset(y: dragOffset)
             
-            // Delete Account text
-            Text("Delete Account")
-                .font(.system(size: 17, weight: .regular))
-                .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+            // Delete Account Button appears below with spacing
+            if showDeleteAccount {
+                Spacer()
+                    .frame(height: 16)
+                
+                Text("Double tap to hide")
+                    .font(.system(size: 12, weight: .regular, design: .default))
+                    .foregroundColor(Color(red: 0.7, green: 0.7, blue: 0.7))
+                    .padding(.bottom, 8)
+                
+                Button(action: {
+                    showDeleteAlert = true
+                }) {
+                    Text("Delete Account")
+                        .font(.system(size: 16, weight: .regular, design: .default))
+                        .tracking(-0.64)
+                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                        .frame(width: 200, height: 62)
+                        .background(Color.clear)
+                        .cornerRadius(100)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 100)
+                                .stroke(Color(red: 0.56, green: 0.56, blue: 0.56), lineWidth: 1)
+                        )
+                }
+                .gesture(
+                    TapGesture(count: 2)
+                        .onEnded {
+                            // Double tap to hide
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                dragOffset = 0
+                                showDeleteAccount = false
+                                thresholdReached = false
+                            }
+                        }
+                )
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .center)
         .padding(.bottom, 32)
         .alert("Log Out", isPresented: $showLogoutAlert) {
             Button("Cancel", role: .cancel) { }
@@ -509,6 +585,21 @@ struct ProfileView: View {
             }
         } message: {
             Text("Are you sure you want to log out?")
+        }
+        .alert("Delete Account", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) {
+                // Reset scroll state when cancelled
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    dragOffset = 0
+                    showDeleteAccount = false
+                    thresholdReached = false
+                }
+            }
+            Button("Delete Account", role: .destructive) {
+                deleteAccount()
+            }
+        } message: {
+            Text("This action cannot be undone. All your data will be permanently deleted.")
         }
     }
     
@@ -522,9 +613,16 @@ struct ProfileView: View {
     }
     
     private func deleteAccount() {
+        // Reset scroll state
+        dragOffset = 0
+        showDeleteAccount = false
+        thresholdReached = false
+        
         // Delete account logic
         appState.navigateTo(.splash)
     }
+    
+
 }
 
 // MARK: - Supporting Views
