@@ -196,7 +196,7 @@ struct PremiumProfileView: View {
             }
         }
         .fullScreenCover(isPresented: $showGoalEdit) {
-            GoalEntryFlowView()
+            EditGoalView(showGoalEdit: $showGoalEdit)
         }
         .sheet(isPresented: $showMilestones) {
             MilestonesView()
@@ -1147,6 +1147,44 @@ enum UserType {
     case premium
     case free  
     case anonymous
+}
+
+// MARK: - Edit Goal View (Onboarding with Back Arrow)
+struct EditGoalView: View {
+    @Binding var showGoalEdit: Bool
+    
+    var body: some View {
+        ZStack {
+            // Same background as onboarding
+            Color(red: 0.93, green: 0.93, blue: 0.93).ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Back arrow area (same as login screen)
+                VStack(spacing: 0) {
+                    Spacer().frame(height: 90)
+                    
+                    // Back arrow - same positioning as login screen
+                    HStack(alignment: .firstTextBaseline, spacing: 24) {
+                        Button(action: { 
+                            showGoalEdit = false 
+                        }) {
+                            Image("back_arrow")
+                                .resizable()
+                                .frame(width: 32, height: 32)
+                                .alignmentGuide(.firstTextBaseline) { d in d[.bottom] + 12 }
+                        }
+                        Spacer()
+                    }
+                    .padding(.leading, 24)
+                    .frame(height: 62)
+                }
+                
+                // Onboarding flow content (adjusted for back arrow space)
+                GoalEntryFlowView()
+                    .padding(.top, -90) // Reduce top padding since we added back arrow area
+            }
+        }
+    }
 }
 
 #Preview {
