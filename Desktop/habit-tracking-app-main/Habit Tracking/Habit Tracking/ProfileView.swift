@@ -11,6 +11,8 @@ import UIKit
 
 // MARK: - Premium Profile View
 struct PremiumProfileView: View {
+    let onMilestoneEdit: ((ProgressDay) -> Void)?
+    
     @StateObject private var appState = AppStateManager.shared
     @Environment(\.presentationMode) var presentationMode
     @StateObject private var coreDataManager = CoreDataManager.shared
@@ -26,9 +28,12 @@ struct PremiumProfileView: View {
     @State private var showPrivacy = false
     @State private var showTerms = false
     @State private var showHelp = false
-    @State private var showSecondReminder = false
-    @State private var showReminderTime = false
-    @State private var showPlaySound = false
+
+    @State private var enableVibration = UserDefaults.standard.object(forKey: "enableVibration") != nil ? UserDefaults.standard.bool(forKey: "enableVibration") : true // Default to true if not set
+    @State private var enableSound = UserDefaults.standard.object(forKey: "enableSound") != nil ? UserDefaults.standard.bool(forKey: "enableSound") : true // Default to true if not set
+    @State private var secondReminderEnabled = UserDefaults.standard.object(forKey: "secondReminderEnabled") != nil ? UserDefaults.standard.bool(forKey: "secondReminderEnabled") : false // Default to false
+    @State private var reminderTime = Date()
+    @State private var secondReminderTime = Date()
     @State private var showEditProfile = false
     @State private var firstName = "Nina"
     @State private var lastName = "Skrbic"
@@ -236,12 +241,24 @@ struct PremiumProfileView: View {
         }
         .sheet(isPresented: $showMilestones) {
             MilestonesView(onEditMilestone: { milestone in
-                // Close milestones sheet and open milestone edit
+                // Close milestones sheet 
                 showMilestones = false
-                selectedMilestone = milestone
-                // Small delay to ensure milestones sheet is closed before opening edit
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    showMilestoneEdit = true
+                
+                // Call the parent callback to handle milestone editing
+                if let onMilestoneEdit = onMilestoneEdit {
+                    // Close this entire profile sheet and let parent handle milestone editing
+                    presentationMode.wrappedValue.dismiss()
+                    
+                    // Small delay to ensure profile sheet is closed before opening edit
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        onMilestoneEdit(milestone)
+                    }
+                } else {
+                    // Fallback to local handling if no callback provided
+                    selectedMilestone = milestone
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        showMilestoneEdit = true
+                    }
                 }
             })
         }
@@ -260,15 +277,7 @@ struct PremiumProfileView: View {
         .sheet(isPresented: $showHelp) {
             HelpSupportView()
         }
-        .sheet(isPresented: $showSecondReminder) {
-            SecondReminderView()
-        }
-        .sheet(isPresented: $showReminderTime) {
-            ReminderTimeView()
-        }
-        .sheet(isPresented: $showPlaySound) {
-            PlaySoundView()
-        }
+
         .sheet(isPresented: $showEditProfile) {
             EditProfileView(firstName: $firstName, lastName: $lastName, profileImageData: $profileImageData, userProfile: userProfile, coreDataManager: coreDataManager)
         }
@@ -434,46 +443,72 @@ struct PremiumProfileView: View {
             // Settings items
             VStack(spacing: 0) {
                 // Second reminder
-                Button(action: {
-                    showSecondReminder = true
-                }) {
-                    HStack {
-                        Text("Second reminder")
-                            .font(.custom("Inter_24pt-SemiBold", size: 15))
-                            .fontWeight(.semibold)
-                            .tracking(-0.3) // -2% letter spacing
-                            .foregroundColor(.black)
+                HStack {
+                    Text("Second reminder")
+                        .font(.custom("Inter_24pt-SemiBold", size: 15))
+                        .fontWeight(.semibold)
+                        .tracking(-0.3) // -2% letter spacing
+                        .foregroundColor(.black)
+                    
+                    Spacer()
+                    
+                    // Toggle switch
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 40)
+                            .fill(secondReminderEnabled ? Color(hex: "4F9BFF") : Color(hex: "D3D3D3"))
+                            .frame(width: 60, height: 30)
                         
-                        Spacer()
-                        
-                        // Toggle switch
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 40)
-                                .fill(Color(hex: "4F9BFF"))
-                                .frame(width: 60, height: 30)
-                            
-                            RoundedRectangle(cornerRadius: 40)
-                                .fill(.white)
-                                .frame(width: 33, height: 24)
-                                .offset(x: 10.5)
+                        RoundedRectangle(cornerRadius: 40)
+                            .fill(.white)
+                            .frame(width: 33, height: 24)
+                            .offset(x: secondReminderEnabled ? 10.5 : -10.5)
+                    }
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            secondReminderEnabled.toggle()
+                            // Save to UserDefaults
+                            UserDefaults.standard.set(secondReminderEnabled, forKey: "secondReminderEnabled")
                         }
                     }
-                    .frame(height: 48)
-                    .padding(.horizontal, 18)
-                    .background(Color(hex: "E5E5E5"))
-                    .clipShape(RoundedCorner(radius: 8, corners: [.topLeft, .topRight]))
-                    .overlay(
-                        RoundedCorner(radius: 8, corners: [.topLeft, .topRight])
-                            .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
-                    )
                 }
+                .frame(height: 48)
+                .padding(.horizontal, 18)
+                .background(Color(hex: "E5E5E5"))
+                .clipShape(RoundedCorner(radius: 8, corners: [.topLeft, .topRight]))
+                .overlay(
+                    RoundedCorner(radius: 8, corners: [.topLeft, .topRight])
+                        .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
+                )
                 
                 // Reminder Time
-                Button(action: {
-                    showReminderTime = true
-                }) {
+                HStack {
+                    Text("Reminder Time")
+                        .font(.custom("Inter_24pt-SemiBold", size: 15))
+                        .fontWeight(.semibold)
+                        .tracking(-0.3) // -2% letter spacing
+                        .foregroundColor(.black)
+                    
+                    Spacer()
+                    
+                    DatePicker("", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                        .labelsHidden()
+                        .datePickerStyle(CompactDatePickerStyle())
+                        .font(.custom("Inter_24pt-SemiBold", size: 15))
+                        .foregroundColor(.black)
+                }
+                .frame(height: 48)
+                .padding(.horizontal, 18)
+                .background(Color(hex: "E5E5E5"))
+                .cornerRadius(0)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 0)
+                        .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
+                )
+                
+                // Second reminder time (conditional)
+                if secondReminderEnabled {
                     HStack {
-                        Text("Reminder Time")
+                        Text("Second reminder time")
                             .font(.custom("Inter_24pt-SemiBold", size: 15))
                             .fontWeight(.semibold)
                             .tracking(-0.3) // -2% letter spacing
@@ -481,9 +516,10 @@ struct PremiumProfileView: View {
                         
                         Spacer()
                         
-                        Text("10:30 AM")
+                        DatePicker("", selection: $secondReminderTime, displayedComponents: .hourAndMinute)
+                            .labelsHidden()
+                            .datePickerStyle(CompactDatePickerStyle())
                             .font(.custom("Inter_24pt-SemiBold", size: 15))
-                            .tracking(-0.3) // -2% letter spacing
                             .foregroundColor(.black)
                     }
                     .frame(height: 48)
@@ -494,33 +530,76 @@ struct PremiumProfileView: View {
                         RoundedRectangle(cornerRadius: 0)
                             .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
                     )
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
                 
-                // Play Sound
-                Button(action: {
-                    showPlaySound = true
-                }) {
-                    HStack {
-                        Text("Play Sound")
-                            .font(.custom("Inter_24pt-SemiBold", size: 15))
-                            .fontWeight(.semibold)
-                            .tracking(-0.3) // -2% letter spacing
-                            .foregroundColor(.black)
+                // Enable Vibration
+                HStack {
+                    Text("Enable Vibration")
+                        .font(.custom("Inter_24pt-SemiBold", size: 15))
+                        .fontWeight(.semibold)
+                        .tracking(-0.3) // -2% letter spacing
+                        .foregroundColor(.black)
+                    
+                    Spacer()
+                    
+                    // Toggle switch
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 40)
+                            .fill(enableVibration ? Color(hex: "4F9BFF") : Color(hex: "D3D3D3"))
+                            .frame(width: 60, height: 30)
                         
-                        Spacer()
-                        
-                        // Toggle switch
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 40)
-                                .fill(Color(hex: "4F9BFF"))
-                                .frame(width: 60, height: 30)
-                            
-                            RoundedRectangle(cornerRadius: 40)
-                                .fill(.white)
-                                .frame(width: 33, height: 24)
-                                .offset(x: 10.5)
+                        RoundedRectangle(cornerRadius: 40)
+                            .fill(.white)
+                            .frame(width: 33, height: 24)
+                            .offset(x: enableVibration ? 10.5 : -10.5)
+                    }
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            enableVibration.toggle()
+                            // Save to UserDefaults
+                            UserDefaults.standard.set(enableVibration, forKey: "enableVibration")
                         }
                     }
+                }
+                .frame(height: 48)
+                .padding(.horizontal, 18)
+                .background(Color(hex: "E5E5E5"))
+                .cornerRadius(0)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 0)
+                        .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
+                )
+                
+                // Play Sound
+                HStack {
+                    Text("Play Sound")
+                        .font(.custom("Inter_24pt-SemiBold", size: 15))
+                        .fontWeight(.semibold)
+                        .tracking(-0.3) // -2% letter spacing
+                        .foregroundColor(.black)
+                    
+                    Spacer()
+                    
+                    // Toggle switch
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 40)
+                            .fill(enableSound ? Color(hex: "4F9BFF") : Color(hex: "D3D3D3"))
+                            .frame(width: 60, height: 30)
+                        
+                        RoundedRectangle(cornerRadius: 40)
+                            .fill(.white)
+                            .frame(width: 33, height: 24)
+                            .offset(x: enableSound ? 10.5 : -10.5)
+                    }
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            enableSound.toggle()
+                            // Save to UserDefaults
+                            UserDefaults.standard.set(enableSound, forKey: "enableSound")
+                        }
+                    }
+                }
                     .frame(height: 48)
                     .padding(.horizontal, 18)
                     .background(Color(hex: "E5E5E5"))
@@ -529,7 +608,6 @@ struct PremiumProfileView: View {
                         RoundedCorner(radius: 8, corners: [.bottomLeft, .bottomRight])
                             .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
                     )
-                }
             }
         }
     }
@@ -788,8 +866,6 @@ struct PremiumProfileView: View {
         // Delete account logic
         appState.navigateTo(.splash)
     }
-    
-
 }
 
 // MARK: - Supporting Views
@@ -826,6 +902,7 @@ struct MilestonesView: View {
                         Text("\(milestones.count) Milestones")
                             .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(.black)
+                            .tracking(-0.4) // -2% letter spacing
                     }
                     
                     Spacer()
@@ -1029,6 +1106,7 @@ struct MilestoneCardView: View {
                                 .font(.system(size: 16, weight: .bold))
                                 .foregroundColor(.white)
                                 .lineLimit(2)
+                                .tracking(-0.32) // -2% letter spacing
                         }
                     }
                     
@@ -1075,6 +1153,7 @@ struct MilestoneCardView: View {
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
                             .lineLimit(2)
+                            .tracking(-0.32) // -2% letter spacing
                     }
                 }
                 
@@ -1592,12 +1671,13 @@ struct EditProfileView: View {
 
 // MARK: - Main Profile Router
 struct ProfileView: View {
+    let onMilestoneEdit: ((ProgressDay) -> Void)?
     @State private var userType: UserType = .premium // This will be set from backend/app state
     
     var body: some View {
         switch userType {
         case .premium:
-            PremiumProfileView()
+            PremiumProfileView(onMilestoneEdit: onMilestoneEdit)
         case .free:
             FreeUserProfileView()
         case .anonymous:
@@ -2011,5 +2091,5 @@ struct EditGoalEntryFlowView: View {
 // Note: ReminderInputView and CustomSwitch components are already defined in GoalEntryFlowView.swift
 
 #Preview {
-    ProfileView()
+    ProfileView(onMilestoneEdit: nil)
 } 

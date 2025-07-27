@@ -23,6 +23,8 @@ struct MainTrackingView: View {
     @State private var clickedDate: Date? = nil
     @State private var milestoneTimer: Timer? = nil
     @State private var audioPlayer: AVAudioPlayer? = nil
+    @State private var enableVibration = UserDefaults.standard.object(forKey: "enableVibration") != nil ? UserDefaults.standard.bool(forKey: "enableVibration") : true // Default to true if not set
+    @State private var enableSound = UserDefaults.standard.object(forKey: "enableSound") != nil ? UserDefaults.standard.bool(forKey: "enableSound") : true // Default to true if not set
     
     var body: some View {
         GeometryReader { geometry in
@@ -86,7 +88,10 @@ struct MainTrackingView: View {
                     }
                 }
                 .sheet(isPresented: $showProfile) {
-                    ProfileView()
+                    ProfileView(onMilestoneEdit: { milestone in
+                        selectedProgressDay = milestone
+                        showMilestonePopup = true
+                    })
                 }
                 .onChange(of: showProfile) { _, isShowing in
                     if !isShowing {
@@ -94,6 +99,7 @@ struct MainTrackingView: View {
                         loadUserProfile()
                     }
                 }
+
                 // KALENDAR BLOK - SIVA POZADINA + ScrollView
                 ZStack(alignment: .top) {
                     RoundedCorner(radius: 40, corners: [.topLeft, .topRight])
@@ -127,21 +133,30 @@ struct MainTrackingView: View {
                 .zIndex(1)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
-            .onAppear {
-                loadData()
-                loadUserProfile()
-                withAnimation(.easeInOut(duration: 0.5)) {
-                    calendarOffsetAnim = calendarOffset
-                }
+                    .onAppear {
+            loadData()
+            loadUserProfile()
+            setupAudioPlayer() // Pripremi zvuk unapred
+            withAnimation(.easeInOut(duration: 0.5)) {
+                calendarOffsetAnim = calendarOffset
             }
+            // Load vibration and sound settings
+            enableVibration = UserDefaults.standard.object(forKey: "enableVibration") != nil ? UserDefaults.standard.bool(forKey: "enableVibration") : true
+            enableSound = UserDefaults.standard.object(forKey: "enableSound") != nil ? UserDefaults.standard.bool(forKey: "enableSound") : true
+        }
             .onChange(of: calendarOffset) { newValue in
                 withAnimation(.easeInOut(duration: 0.5)) {
                     calendarOffsetAnim = newValue
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ProfileImageUpdated"))) { _ in
-                loadUserProfile()
-            }
+                    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ProfileImageUpdated"))) { _ in
+            loadUserProfile()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
+            // Update vibration and sound settings when UserDefaults changes
+            enableVibration = UserDefaults.standard.object(forKey: "enableVibration") != nil ? UserDefaults.standard.bool(forKey: "enableVibration") : true
+            enableSound = UserDefaults.standard.object(forKey: "enableSound") != nil ? UserDefaults.standard.bool(forKey: "enableSound") : true
+        }
         }
         .navigationBarHidden(true)
         .overlay(
@@ -357,17 +372,24 @@ struct MainTrackingView: View {
             selectedProgressDay = progressDay
             showMilestonePopup = true
         } else {
-            // Vibracija kada se klikne na broj - neprekidna 1 sekunda
-            let notificationFeedback = UINotificationFeedbackGenerator()
-            notificationFeedback.prepare()
+            // Pusti zvuk i vibraciju kada se klikne na broj (samo ako su uključeni)
+            if enableSound {
+                playSound()
+            }
             
-            // Neprekidna vibracija 1 sekunda
-            var vibrationCount = 0
-            Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { timer in
-                notificationFeedback.notificationOccurred(.success)
-                vibrationCount += 1
-                if vibrationCount >= 100 { // 100 * 0.01s = 1s
-                    timer.invalidate()
+            // Vibracija kada se klikne na broj - neprekidna 1 sekunda (samo ako je uključena)
+            if enableVibration {
+                let notificationFeedback = UINotificationFeedbackGenerator()
+                notificationFeedback.prepare()
+                
+                // Neprekidna vibracija 1 sekunda
+                var vibrationCount = 0
+                Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { timer in
+                    notificationFeedback.notificationOccurred(.success)
+                    vibrationCount += 1
+                    if vibrationCount >= 100 { // 100 * 0.01s = 1s
+                        timer.invalidate()
+                    }
                 }
             }
             
@@ -408,7 +430,7 @@ struct MainTrackingView: View {
         }
     }
     
-    private func playSound() {
+    private func setupAudioPlayer() {
         guard let path = Bundle.main.path(forResource: "flower_sound", ofType: "mp3") else {
             print("⚠️ MP3 fajl 'flower_sound.mp3' nije pronađen!")
             return
@@ -418,12 +440,16 @@ struct MainTrackingView: View {
         
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: url)
-            audioPlayer?.prepareToPlay()
-            audioPlayer?.play()
-            print("🔊 Zvuk se reprodukuje...")
+            audioPlayer?.prepareToPlay() // Pripremi unapred
+            print("🔊 Audio player pripremljen...")
         } catch {
-            print("⚠️ Greška pri puštanju zvuka: \(error)")
+            print("⚠️ Greška pri pripremi zvuka: \(error)")
         }
+    }
+    
+    private func playSound() {
+        // Brzo pusti zvuk bez prepare
+        audioPlayer?.play()
     }
     
     private func animateFlowerGrowth(type: String) {

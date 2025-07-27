@@ -11,6 +11,10 @@ struct MilestonePopupView: View {
     @State private var milestoneText = ""
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var photoData: Data?
+    
+    // Original values for comparison
+    @State private var originalMilestoneText = ""
+    @State private var originalPhotoData: Data?
     @State private var showImagePicker = false
     @State private var showImageActionSheet = false
     @State private var showCamera = false
@@ -52,7 +56,7 @@ struct MilestonePopupView: View {
                         }
                         .onEnded { value in
                             if value.translation.height > 100 {
-                                if !milestoneText.isEmpty || photoData != nil {
+                                if hasChanges() {
                                     showCancelAlert = true
                                 } else {
                                     dismissModal()
@@ -66,6 +70,11 @@ struct MilestonePopupView: View {
             // Load existing milestone data
             milestoneText = progressDay.milestoneText ?? ""
             photoData = progressDay.milestonePhoto
+            
+            // Store original values for comparison
+            originalMilestoneText = progressDay.milestoneText ?? ""
+            originalPhotoData = progressDay.milestonePhoto
+            
             showModal()
         }
         .actionSheet(isPresented: $showImageActionSheet) {
@@ -293,7 +302,7 @@ struct MilestonePopupView: View {
         HStack(spacing: 10) {
             // Cancel button
             Button(action: {
-                if !milestoneText.isEmpty || photoData != nil {
+                if hasChanges() {
                     showCancelAlert = true
                 } else {
                     dismissModal()
@@ -360,6 +369,12 @@ struct MilestonePopupView: View {
         } completion: {
             isPresented = false
         }
+    }
+    
+    private func hasChanges() -> Bool {
+        let textChanged = milestoneText != originalMilestoneText
+        let photoChanged = (photoData != originalPhotoData)
+        return textChanged || photoChanged
     }
     
     private func saveMilestone() {
