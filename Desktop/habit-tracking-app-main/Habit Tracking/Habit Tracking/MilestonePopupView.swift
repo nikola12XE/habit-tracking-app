@@ -43,6 +43,7 @@ struct MilestonePopupView: View {
                         .onTapGesture {
                             isInputFocused = false
                         }
+                        .animation(.none, value: isInputFocused) // Sprečava interferiranje sa animacijama
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 .offset(y: max(0, modalOffset + dragOffset))
@@ -237,6 +238,7 @@ struct MilestonePopupView: View {
                         .multilineTextAlignment(.leading)
                         .padding(.horizontal, 24)
                         .focused($isInputFocused)
+                        .animation(.none, value: isInputFocused) // Sprečava pauziranje animacija
                     Spacer()
                     // Paperclip icon - attach button
                     Button(action: {

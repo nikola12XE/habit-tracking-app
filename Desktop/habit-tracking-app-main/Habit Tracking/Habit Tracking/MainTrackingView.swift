@@ -366,12 +366,9 @@ struct MainTrackingView: View {
         }
         
         if let progressDay = progressDay {
-            // Day already has progress - show milestone popup with small delay
-            // to allow any ongoing animations to continue in background
+            // Day already has progress - show milestone popup immediately
             selectedProgressDay = progressDay
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                showMilestonePopup = true
-            }
+            showMilestonePopup = true
         } else {
             // Pusti zvuk i vibraciju kada se klikne na broj (samo ako su uključeni)
             if enableSound {
@@ -454,7 +451,7 @@ struct MainTrackingView: View {
     }
     
     private func animateFlowerGrowth(type: String) {
-        // Generiši novi ID za ovu animaciju - svaka animacija je nezavisna
+        // Generiši novi ID za ovu animaciju - svaka animacija je potpuno nezavisna
         let animationID = UUID()
         
         // Create falling flowers istog tipa, različitih veličina
@@ -481,13 +478,11 @@ struct MainTrackingView: View {
             fallingFlowers.append(flower)
         }
         
-        // Remove flowers after animation - svaka animacija čisti svoje cvetove nezavisno
+        // Remove flowers after animation - BEZ withAnimation bloka za čišćenje
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-            withAnimation(.easeOut(duration: 0.5)) {
-                // Ukloni samo cvetove iz ove animacije - bez provere globalnog ID-a
-                self.fallingFlowers.removeAll { flower in
-                    flower.animationID == animationID
-                }
+            // Direktno ukloni cvetove bez animacije - brže i bez interferiranja
+            self.fallingFlowers.removeAll { flower in
+                flower.animationID == animationID
             }
         }
     }
@@ -784,8 +779,9 @@ struct FallingFlowerView: View {
             .blur(radius: 12) // Smanjen blur
             .opacity(1.0) // 100% opacity
             .onAppear {
+                // Delay za svaki cvet da padaju sekvencijalno
                 DispatchQueue.main.asyncAfter(deadline: .now() + flower.delay) {
-                    withAnimation(.easeIn(duration: 1.8)) { // Ubrzana animacija
+                    withAnimation(.easeIn(duration: 1.8)) {
                         position = flower.endPosition
                     }
                 }
