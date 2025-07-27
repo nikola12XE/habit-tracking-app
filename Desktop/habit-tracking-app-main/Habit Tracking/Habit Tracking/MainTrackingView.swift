@@ -18,8 +18,6 @@ struct MainTrackingView: View {
     @State private var showNoGoalAlert = false
     @State private var calendarOffsetAnim: CGFloat = 0 // for animation
     @State private var lastFlowerIndex: Int? = nil
-    @State private var isAnimatingFlowers = false
-    @State private var currentAnimationID = UUID()
     @State private var clickedDate: Date? = nil
     @State private var milestoneTimer: Timer? = nil
     @State private var audioPlayer: AVAudioPlayer? = nil
@@ -368,9 +366,12 @@ struct MainTrackingView: View {
         }
         
         if let progressDay = progressDay {
-            // Day already has progress - show milestone popup
+            // Day already has progress - show milestone popup with small delay
+            // to allow any ongoing animations to continue in background
             selectedProgressDay = progressDay
-            showMilestonePopup = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                showMilestonePopup = true
+            }
         } else {
             // Pusti zvuk i vibraciju kada se klikne na broj (samo ako su uključeni)
             if enableSound {
@@ -453,12 +454,8 @@ struct MainTrackingView: View {
     }
     
     private func animateFlowerGrowth(type: String) {
-        // Ne brišemo prethodne cvetove - dozvoli paralelne animacije
-        isAnimatingFlowers = true
-        
-        // Generiši novi ID za ovu animaciju
+        // Generiši novi ID za ovu animaciju - svaka animacija je nezavisna
         let animationID = UUID()
-        currentAnimationID = animationID
         
         // Create falling flowers istog tipa, različitih veličina
         let flowerSizes: [CGFloat] = [500, 400, 300, 250, 200, 180, 160, 140, 120, 100]
@@ -484,16 +481,12 @@ struct MainTrackingView: View {
             fallingFlowers.append(flower)
         }
         
-        // Remove flowers after animation - proveri da li je ovo još uvek aktivna animacija
+        // Remove flowers after animation - svaka animacija čisti svoje cvetove nezavisno
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-            // Proveri da li je ovo još uvek aktivna animacija
-            if self.currentAnimationID == animationID {
-                withAnimation(.easeOut(duration: 0.5)) {
-                    // Ukloni samo cvetove iz ove animacije
-                    self.fallingFlowers.removeAll { flower in
-                        flower.animationID == animationID
-                    }
-                    self.isAnimatingFlowers = false
+            withAnimation(.easeOut(duration: 0.5)) {
+                // Ukloni samo cvetove iz ove animacije - bez provere globalnog ID-a
+                self.fallingFlowers.removeAll { flower in
+                    flower.animationID == animationID
                 }
             }
         }

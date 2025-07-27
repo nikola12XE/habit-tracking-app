@@ -31,9 +31,8 @@ struct PremiumProfileView: View {
 
     @State private var enableVibration = UserDefaults.standard.object(forKey: "enableVibration") != nil ? UserDefaults.standard.bool(forKey: "enableVibration") : true // Default to true if not set
     @State private var enableSound = UserDefaults.standard.object(forKey: "enableSound") != nil ? UserDefaults.standard.bool(forKey: "enableSound") : true // Default to true if not set
-    @State private var secondReminderEnabled = UserDefaults.standard.object(forKey: "secondReminderEnabled") != nil ? UserDefaults.standard.bool(forKey: "secondReminderEnabled") : false // Default to false
+    @State private var secondReminderEnabled = false // Always start OFF - user can turn ON if needed
     @State private var reminderTime = Date()
-    @State private var secondReminderTime = Date()
     @State private var showEditProfile = false
     @State private var firstName = "Nina"
     @State private var lastName = "Skrbic"
@@ -242,17 +241,16 @@ struct PremiumProfileView: View {
         .sheet(isPresented: $showMilestones) {
             MilestonesView(onEditMilestone: { milestone in
                 // Close milestones sheet 
-                showMilestones = false
-                
-                // Call the parent callback to handle milestone editing
+                // Call the parent callback to handle milestone editing immediately
                 if let onMilestoneEdit = onMilestoneEdit {
-                    // Close this entire profile sheet and let parent handle milestone editing
-                    presentationMode.wrappedValue.dismiss()
-                    
-                    // Small delay to ensure profile sheet is closed before opening edit
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        onMilestoneEdit(milestone)
+                    // Close both sheets simultaneously with animation sync
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        showMilestones = false
                     }
+                    
+                    // Immediately dismiss and open milestone edit
+                    presentationMode.wrappedValue.dismiss()
+                    onMilestoneEdit(milestone)
                 } else {
                     // Fallback to local handling if no callback provided
                     selectedMilestone = milestone
@@ -480,35 +478,10 @@ struct PremiumProfileView: View {
                         .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
                 )
                 
-                // Reminder Time
-                HStack {
-                    Text("Reminder Time")
-                        .font(.custom("Inter_24pt-SemiBold", size: 15))
-                        .fontWeight(.semibold)
-                        .tracking(-0.3) // -2% letter spacing
-                        .foregroundColor(.black)
-                    
-                    Spacer()
-                    
-                    DatePicker("", selection: $reminderTime, displayedComponents: .hourAndMinute)
-                        .labelsHidden()
-                        .datePickerStyle(CompactDatePickerStyle())
-                        .font(.custom("Inter_24pt-SemiBold", size: 15))
-                        .foregroundColor(.black)
-                }
-                .frame(height: 48)
-                .padding(.horizontal, 18)
-                .background(Color(hex: "E5E5E5"))
-                .cornerRadius(0)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 0)
-                        .stroke(Color(hex: "D9D9D9"), lineWidth: 1)
-                )
-                
-                // Second reminder time (conditional)
+                // Reminder Time (only shown when second reminder is enabled)
                 if secondReminderEnabled {
                     HStack {
-                        Text("Second reminder time")
+                        Text("Reminder Time")
                             .font(.custom("Inter_24pt-SemiBold", size: 15))
                             .fontWeight(.semibold)
                             .tracking(-0.3) // -2% letter spacing
@@ -516,7 +489,7 @@ struct PremiumProfileView: View {
                         
                         Spacer()
                         
-                        DatePicker("", selection: $secondReminderTime, displayedComponents: .hourAndMinute)
+                        DatePicker("", selection: $reminderTime, displayedComponents: .hourAndMinute)
                             .labelsHidden()
                             .datePickerStyle(CompactDatePickerStyle())
                             .font(.custom("Inter_24pt-SemiBold", size: 15))
@@ -1194,24 +1167,74 @@ struct PremiumView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
-            VStack {
-                Text("Premium")
-                    .font(.largeTitle)
-                    .padding()
+        VStack(spacing: 0) {
+            // Background with corner radius
+            VStack(spacing: 0) {
+                // Drag handle
+                RoundedRectangle(cornerRadius: 2.5)
+                    .fill(Color(red: 0.8, green: 0.8, blue: 0.8))
+                    .frame(width: 38, height: 5)
+                    .padding(.top, 24)
+                    .padding(.bottom, 32)
+                
+                // Main content positioned 130px from top
+                VStack(spacing: 12) {
+                    // Title
+                    Text("You're a\nPremium user!")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(Color(red: 0.047, green: 0.047, blue: 0.047))
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .lineSpacing(0) // 100% line height
+                        .tracking(-0.64) // -2% letter spacing for 32px font
+                    
+                    // Subtitle
+                    Text("Your subscription will\nrenew on September 14.")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.black)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .tracking(-0.32) // -2% letter spacing for 16px font
+                        .padding(.top, 8)
+                    
+                    // Cancel subscription link
+                    Button(action: {
+                        // Handle cancel subscription
+                        print("Cancel subscription tapped")
+                    }) {
+                        Text("Cancel subscription")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.56))
+                            .underline()
+                            .tracking(-0.28) // -2% letter spacing for 14px font
+                    }
+                    .padding(.top, 42)
+                }
+                .padding(.top, 74) // 130px total from top (24+32+74=130)
                 
                 Spacer()
-            }
-            .navigationTitle("Premium")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
+                
+                // Done button
+                Button(action: {
+                    dismiss()
+                }) {
+                    Text("Done")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 200, height: 62)
+                        .background(Color.black)
+                        .cornerRadius(100)
                 }
+                .padding(.bottom, 32)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(red: 0.929, green: 0.929, blue: 0.929)) // #EDEDED
+            .clipShape(RoundedCorner(radius: 16, corners: [.topLeft, .topRight]))
         }
+        .presentationDetents([.fraction(1.0)])
+        .presentationDragIndicator(.hidden)
+        .presentationBackground(.clear)
+        .ignoresSafeArea(.container, edges: .bottom)
     }
 }
 
